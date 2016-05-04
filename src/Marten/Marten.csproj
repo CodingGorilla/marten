@@ -106,7 +106,6 @@
     <Compile Include="Linq\ISelector.cs" />
     <Compile Include="Linq\MartenQueryProvider.cs" />
     <Compile Include="Linq\Parsing\IsOneOf.cs" />
-    <Compile Include="Linq\QueryableExtensions.cs" />
     <Compile Include="Linq\QueryHandlers\AggregateQueryHandler.cs" />
     <Compile Include="Linq\QueryHandlers\CachedQuery.cs" />
     <Compile Include="Linq\QueryHandlers\CachedQueryHandler.cs" />
@@ -134,7 +133,11 @@
     <Compile Include="Linq\WhereClauseVisitor.cs" />
     <Compile Include="Linq\WholeDocumentSelector.cs" />
     <Compile Include="QuerySession.cs" />
+    <Compile Include="Schema\DbObjects.cs" />
+    <Compile Include="Schema\DocumentSchemaExtensions.cs" />
+    <Compile Include="Schema\IDbObjects.cs" />
     <Compile Include="Schema\IdField.cs" />
+    <Compile Include="Schema\ActualIndex.cs" />
     <Compile Include="Schema\QualifiedDatabaseName.cs" />
     <Compile Include="Schema\ColumnValue.cs" />
     <Compile Include="Schema\CombGuidIdGeneration.cs" />
@@ -152,10 +155,12 @@
     <Compile Include="Schema\IResolver.cs" />
     <Compile Include="Schema\MartenSchemaException.cs" />
     <Compile Include="Schema\Resolver.cs" />
+    <Compile Include="Schema\SchemaDiff.cs" />
+    <Compile Include="Schema\SchemaObjects.cs" />
     <Compile Include="Schema\Sequences\IdentityKeyGeneration.cs" />
     <Compile Include="Schema\Sequences\NoOpIdGeneration.cs" />
     <Compile Include="Schema\SubClassMapping.cs" />
-    <Compile Include="Schema\EnsureDatabaseSchema.cs" />
+    <Compile Include="Schema\DatabaseSchemaGenerator.cs" />
     <Compile Include="Schema\UpsertFunction.cs" />
     <Compile Include="Services\BatchCommand.cs" />
     <Compile Include="Services\BatchQuerying\BatchedQuery.cs" />
@@ -244,7 +249,7 @@
     <Compile Include="Services\TrackedEntity.cs" />
     <Compile Include="Services\TransactionState.cs" />
     <Compile Include="StoreOptions.cs" />
-    <Compile Include="Util\QueryableExtensions.cs" />
+    <Compile Include="QueryableExtensions.cs" />
     <Compile Include="Util\EnumerableExtensions.cs" />
     <Compile Include="Util\SerializerExtensions.cs" />
     <Compile Include="DocumentSession.cs" />
@@ -287,6 +292,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Schema\SQL\mt_apply_aggregation.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Schema\SchemaObjects.sql" />
   </ItemGroup>
   <Choose>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6')">

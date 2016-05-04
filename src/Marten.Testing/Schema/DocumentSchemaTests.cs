@@ -133,12 +133,12 @@ namespace Marten.Testing.Schema
             theSchema.StorageFor(typeof(Issue)).ShouldNotBeNull();
             theSchema.StorageFor(typeof(Company)).ShouldNotBeNull();
 
-            var tables = theSchema.SchemaTables();
+            var tables = theSchema.DbObjects.SchemaTables();
             tables.ShouldContain("public.mt_doc_user");
             tables.ShouldContain("public.mt_doc_issue");
             tables.ShouldContain("public.mt_doc_company");
 
-            var functions = theSchema.SchemaFunctionNames();
+            var functions = theSchema.DbObjects.SchemaFunctionNames();
             functions.ShouldContain("public.mt_upsert_user");
             functions.ShouldContain("public.mt_upsert_issue");
             functions.ShouldContain("public.mt_upsert_company");
@@ -201,6 +201,8 @@ namespace Marten.Testing.Schema
 
             var fileSystem = new FileSystem();
             var files = fileSystem.FindFiles("allsql", FileSet.Shallow("*.sql")).ToArray();
+
+            files.ShouldNotContain("database_schemas.sql");
 
             files.Select(Path.GetFileName).Where(x => x != "all.sql").OrderBy(x => x)
                 .ShouldHaveTheSameElementsAs("company.sql", "issue.sql", "mt_hilo.sql", "user.sql");
@@ -322,8 +324,8 @@ namespace Marten.Testing.Schema
                 session.SaveChanges();
             }
 
-            _tables = _schema.SchemaTables();
-            _functions = _schema.SchemaFunctionNames();
+            _tables = _schema.DbObjects.SchemaTables();
+            _functions = _schema.DbObjects.SchemaFunctionNames();
         }
 
 
@@ -481,8 +483,8 @@ namespace Marten.Testing.Schema
                 session.SaveChanges();
             }
 
-            _tables = _schema.SchemaTables();
-            _functions = _schema.SchemaFunctionNames();
+            _tables = _schema.DbObjects.SchemaTables();
+            _functions = _schema.DbObjects.SchemaFunctionNames();
         }
 
 

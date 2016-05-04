@@ -12,20 +12,19 @@ using Marten.Linq;
 using Marten.Linq.QueryHandlers;
 using Marten.Schema.Sequences;
 using Marten.Util;
-using Remotion.Linq;
 
 namespace Marten.Schema
 {
     public class DocumentSchema : IDocumentSchema, IDisposable
     {
+        private readonly ConcurrentDictionary<Type, IDocumentStorage> _documentTypes =
+            new ConcurrentDictionary<Type, IDocumentStorage>();
+
         private readonly IConnectionFactory _factory;
         private readonly IMartenLogger _logger;
 
         private readonly ConcurrentDictionary<Type, IDocumentMapping> _mappings =
             new ConcurrentDictionary<Type, IDocumentMapping>();
-
-        private readonly ConcurrentDictionary<Type, IDocumentStorage> _documentTypes =
-            new ConcurrentDictionary<Type, IDocumentStorage>();
 
 
         public DocumentSchema(StoreOptions options, IConnectionFactory factory, IMartenLogger logger)
@@ -42,22 +41,28 @@ namespace Marten.Schema
             Parser = new MartenExpressionParser(StoreOptions.Serializer(), StoreOptions);
 
             HandlerFactory = new QueryHandlerFactory(this);
+
+            DbObjects = new DbObjects(_factory, this);
         }
 
-        public MartenExpressionParser Parser { get; }
-
-        public StoreOptions StoreOptions { get; }
+        public PostgresUpsertType UpsertType => StoreOptions.UpsertType;
 
 
         public void Dispose()
         {
         }
 
+        public IDbObjects DbObjects { get; }
+
+        public MartenExpressionParser Parser { get; }
+
+        public StoreOptions StoreOptions { get; }
+
         public IDocumentMapping MappingFor(Type documentType)
         {
             return _mappings.GetOrAdd(documentType, type =>
             {
-                if (type == typeof (EventStream))
+                if (type == typeof(EventStream))
                 {
                     return StoreOptions.Events.As<IDocumentMapping>();
                 }
@@ -97,12 +102,130 @@ namespace Marten.Schema
                 var prebuiltType = StoreOptions.PreBuiltStorage
                     .FirstOrDefault(x => x.DocumentTypeForStorage() == documentType);
 
-                storage = prebuiltType != null ? DocumentStorageBuilder.BuildStorageObject(this, prebuiltType, mapping.As<DocumentMapping>()) : mapping.BuildStorage(this);
+                storage = prebuiltType != null
+                    ? DocumentStorageBuilder.BuildStorageObject(this, prebuiltType, mapping.As<DocumentMapping>())
+                    : mapping.BuildStorage(this);
 
                 buildSchemaObjectsIfNecessary(mapping);
 
                 return storage;
             });
+        }
+
+        public IEventStoreConfiguration Events => StoreOptions.Events;
+
+
+
+        public string[] AllSchemaNames()
+        {
+            var schemas =
+                AllDocumentMaps().OfType<DocumentMapping>().Select(x => x.DatabaseSchemaName).Distinct().ToList();
+
+            schemas.Fill(StoreOptions.DatabaseSchemaName);
+            schemas.Fill(StoreOptions.Events.DatabaseSchemaName);
+
+            var schemaNames = schemas.Select(x => x.ToLowerInvariant()).ToArray();
+            return schemaNames;
+        }
+
+        public ISequences Sequences { get; }
+
+        public void WriteDDL(string filename)
+        {
+            var sql = ToDDL();
+            new FileSystem().WriteStringToFile(filename, sql);
+        }
+
+        public void WriteDDLByType(string directory)
+        {
+            var system = new FileSystem();
+
+            system.DeleteDirectory(directory);
+            system.CreateDirectory(directory);
+
+            WriteDatabaseSchemaGenerationScript(directory, system);
+
+            _mappings.Values.Where(x => !(x is SubClassMapping)).Each(mapping =>
+            {
+                var writer = new StringWriter();
+                mapping.WriteSchemaObjects(this, writer);
+
+                var filename = directory.AppendPath(mapping.Alias + ".sql");
+                system.WriteStringToFile(filename, writer.ToString());
+            });
+
+            var hiloScript = getHiloScript();
+            system.WriteStringToFile(directory.AppendPath("mt_hilo.sql"), hiloScript);
+
+            if (Events.IsActive)
+            {
+                var filename = directory.AppendPath("mt_streams.sql");
+                var writer = new StringWriter();
+
+                Events.As<IDocumentMapping>().WriteSchemaObjects(this, writer);
+
+                system.WriteStringToFile(filename, writer.ToString());
+            }
+        }
+
+
+        private void WriteDatabaseSchemaGenerationScript(string directory, FileSystem system)
+        {
+            var allSchemaNames = AllSchemaNames();
+            var script = DatabaseSchemaGenerator.GenerateScript(allSchemaNames);
+
+            if (script.IsNotEmpty())
+            {
+                var filename = directory.AppendPath("database_schemas.sql");
+                system.WriteStringToFile(filename, script);
+            }
+        }
+
+        private string getHiloScript()
+        {
+            return SchemaBuilder.GetSqlScript(StoreOptions.DatabaseSchemaName, "mt_hilo");
+        }
+
+
+        public string ToDDL()
+        {
+            var writer = new StringWriter();
+
+            var allSchemaNames = AllSchemaNames();
+            DatabaseSchemaGenerator.WriteSql(allSchemaNames, writer);
+
+            StoreOptions.AllDocumentMappings.Each(x => x.WriteSchemaObjects(this, writer));
+
+            if (Events.IsActive)
+            {
+                Events.As<IDocumentMapping>().WriteSchemaObjects(this, writer);
+            }
+
+            writer.WriteLine(SchemaBuilder.GetSqlScript(StoreOptions.DatabaseSchemaName, "mt_hilo"));
+
+            return writer.ToString();
+        }
+
+
+        public IEnumerable<IDocumentMapping> AllDocumentMaps()
+        {
+            return StoreOptions.AllDocumentMappings;
+        }
+
+        public IResolver<T> ResolverFor<T>()
+        {
+            return StorageFor(typeof(T)).As<IResolver<T>>();
+        }
+
+
+        public IQueryHandlerFactory HandlerFactory { get; }
+
+        public void ResetSchemaExistenceChecks()
+        {
+            AllDocumentMaps().Each(x => x.ResetSchemaExistenceChecks());
+            Events.As<EventGraph>().ResetSchemaExistenceChecks();
+
+            _documentTypes.Clear();
         }
 
         private void buildSchemaObjectsIfNecessary(IDocumentMapping mapping)
@@ -133,7 +256,8 @@ namespace Marten.Schema
                     .Select(MappingFor);
             });
 
-            sortedMappings.Each(x => x.GenerateSchemaObjectsIfNecessary(StoreOptions.AutoCreateSchemaObjects, this, executeSql));
+            sortedMappings.Each(
+                x => x.GenerateSchemaObjectsIfNecessary(StoreOptions.AutoCreateSchemaObjects, this, executeSql));
         }
 
         private void assertNoDuplicateDocumentAliases()
@@ -144,189 +268,17 @@ namespace Marten.Schema
                 var message = duplicates.Select(group =>
                 {
                     return
-                        $"Document types {@group.Select(x => x.DocumentType.Name).Join(", ")} all have the same document alias '{@group.Key}'. You must explicitly make document type aliases to disambiguate the database schema objects";
+                        $"Document types {group.Select(x => x.DocumentType.Name).Join(", ")} all have the same document alias '{group.Key}'. You must explicitly make document type aliases to disambiguate the database schema objects";
                 }).Join("\n");
 
                 throw new AmbiguousDocumentTypeAliasesException(message);
             }
         }
 
-        public IEventStoreConfiguration Events => StoreOptions.Events;
-        public PostgresUpsertType UpsertType => StoreOptions.UpsertType;
-
-        public TableName[] SchemaTables()
-        {
-            Func<DbDataReader, TableName> transform = r => new TableName(r.GetString(0), r.GetString(1));
-
-            var sql = "select table_schema, table_name from information_schema.tables where table_name like ? and table_schema = ANY(?);";
-
-            var schemaNames = AllSchemaNames();
-
-            var tablePattern = DocumentMapping.MartenPrefix + "%";
-            var tables = _factory.Fetch(sql, transform, tablePattern, schemaNames).ToArray();
 
 
-            return tables;
 
 
-        }
-
-        internal string[] AllSchemaNames()
-        {
-            var schemas =
-                AllDocumentMaps().OfType<DocumentMapping>().Select(x => x.DatabaseSchemaName).Distinct().ToList();
-
-            schemas.Fill(StoreOptions.DatabaseSchemaName);
-            schemas.Fill(StoreOptions.Events.DatabaseSchemaName);
-
-            var schemaNames = schemas.Select(x => x.ToLowerInvariant()).ToArray();
-            return schemaNames;
-        }
-
-        public TableName[] DocumentTables()
-        {
-            return SchemaTables().Where(x => x.Name.StartsWith(DocumentMapping.TablePrefix)).ToArray();
-        }
-
-        public FunctionName[] SchemaFunctionNames()
-        {
-            Func<DbDataReader, FunctionName> transform = r => new FunctionName(r.GetString(0), r.GetString(1));
-
-            var sql = "SELECT specific_schema, routine_name FROM information_schema.routines WHERE type_udt_name != 'trigger' and routine_name like ? and specific_schema = ANY(?);";
-
-            return _factory.Fetch(sql, transform, DocumentMapping.MartenPrefix + "%", AllSchemaNames()).ToArray();
-        }
-
-        public ISequences Sequences { get; }
-
-        public void WriteDDL(string filename)
-        {
-            var sql = ToDDL();
-            new FileSystem().WriteStringToFile(filename, sql);
-        }
-
-        public void WriteDDLByType(string directory)
-        {
-            var system = new FileSystem();
-
-            system.DeleteDirectory(directory);
-            system.CreateDirectory(directory);
-
-            _mappings.Values.Where(x => !(x is SubClassMapping)).Each(mapping =>
-            {
-                var writer = new StringWriter();
-                mapping.WriteSchemaObjects(this, writer);
-
-                var filename = directory.AppendPath(mapping.Alias + ".sql");
-                system.WriteStringToFile(filename, writer.ToString());
-            });
-
-            var hiloScript = getHiloScript();
-            system.WriteStringToFile(directory.AppendPath("mt_hilo.sql"), hiloScript);
-
-            if (Events.IsActive)
-            {
-                var filename = directory.AppendPath("mt_streams.sql");
-                var writer = new StringWriter();
-
-                Events.As<IDocumentMapping>().WriteSchemaObjects(this, writer);
-
-                system.WriteStringToFile(filename, writer.ToString());
-            }
-        }
-
-        private string getHiloScript()
-        {
-            var writer = new StringWriter();
-
-            EnsureDatabaseSchema.WriteSql(StoreOptions.DatabaseSchemaName, writer);
-            writer.WriteLine(SchemaBuilder.GetSqlScript(StoreOptions.DatabaseSchemaName, "mt_hilo"));
-
-            return writer.ToString();
-        }
-
-        public string ToDDL()
-        {
-            var writer = new StringWriter();
-
-            EnsureDatabaseSchema.WriteSql(StoreOptions.DatabaseSchemaName, writer);
-
-            StoreOptions.AllDocumentMappings.Each(x => x.WriteSchemaObjects(this, writer));
-
-            if (Events.IsActive)
-            {
-                Events.As<IDocumentMapping>().WriteSchemaObjects(this, writer);
-            }
-
-            writer.WriteLine(SchemaBuilder.GetSqlScript(StoreOptions.DatabaseSchemaName, "mt_hilo"));
-
-            return writer.ToString();
-        }
-
-        public TableDefinition TableSchema(IDocumentMapping documentMapping)
-        {
-            var columns = findTableColumns(documentMapping);
-            if (!columns.Any()) return null;
-
-            var pkName = primaryKeysFor(documentMapping).SingleOrDefault();
-
-            return new TableDefinition(documentMapping.Table, pkName,  columns);
-        }
-
-        public TableDefinition TableSchema(Type documentType)
-        {
-            return TableSchema(MappingFor(documentType));
-        }
-
-        public IEnumerable<IDocumentMapping> AllDocumentMaps()
-        {
-            return StoreOptions.AllDocumentMappings;
-        }
-
-        public IResolver<T> ResolverFor<T>()
-        {
-            return StorageFor(typeof (T)).As<IResolver<T>>();
-        }
-
-        public bool TableExists(TableName table)
-        {
-            var schemaTables = SchemaTables();
-            return schemaTables.Contains(table);
-        }
-
-        public IQueryHandlerFactory HandlerFactory { get; }
-        public void ResetSchemaExistenceChecks()
-        {
-            AllDocumentMaps().Each(x => x.ResetSchemaExistenceChecks());
-            Events.As<EventGraph>().ResetSchemaExistenceChecks();
-
-            _documentTypes.Clear();
-        }
-
-        private string[] primaryKeysFor(IDocumentMapping documentMapping)
-        {
-            var sql = @"
-select a.attname, format_type(a.atttypid, a.atttypmod) as data_type
-from pg_index i
-join   pg_attribute a on a.attrelid = i.indrelid and a.attnum = ANY(i.indkey)
-where attrelid = (select pg_class.oid 
-                  from pg_class 
-                  join pg_catalog.pg_namespace n ON n.oid = pg_class.relnamespace
-                  where n.nspname = ? and relname = ?)
-and i.indisprimary; 
-";
-
-            return _factory.GetStringList(sql, documentMapping.Table.Schema, documentMapping.Table.Name).ToArray();
-        }
-
-        private IEnumerable<TableColumn> findTableColumns(IDocumentMapping documentMapping)
-        {
-            Func<DbDataReader, TableColumn> transform = r => new TableColumn(r.GetString(0), r.GetString(1));
-
-            var sql = "select column_name, data_type from information_schema.columns where table_schema = ? and table_name = ? order by ordinal_position";
-
-            return _factory.Fetch(sql, transform, documentMapping.Table.Schema, documentMapping.Table.Name);
-        }
     }
 
     [Serializable]

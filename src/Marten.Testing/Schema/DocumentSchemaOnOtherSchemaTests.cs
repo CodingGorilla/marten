@@ -75,12 +75,12 @@ namespace Marten.Testing.Schema
             theSchema.StorageFor(typeof(Issue)).ShouldNotBeNull();
             theSchema.StorageFor(typeof(Company)).ShouldNotBeNull();
 
-            var tables = theSchema.SchemaTables();
+            var tables = theSchema.DbObjects.SchemaTables();
             tables.ShouldContain("other.mt_doc_user");
             tables.ShouldContain("other.mt_doc_issue");
             tables.ShouldContain("other.mt_doc_company");
 
-            var functions = theSchema.SchemaFunctionNames();
+            var functions = theSchema.DbObjects.SchemaFunctionNames();
             functions.ShouldContain("other.mt_upsert_user");
             functions.ShouldContain("other.mt_upsert_issue");
             functions.ShouldContain("other.mt_upsert_company");
@@ -127,7 +127,7 @@ namespace Marten.Testing.Schema
         }
 
         [Fact]
-        public void can_write_ddl_by_type_smoke_test()
+        public void can_write_ddl_by_type_smoke_test_for_document_creation()
         {
             using (var store = DocumentStore.For(_ =>
             {
@@ -144,7 +144,8 @@ namespace Marten.Testing.Schema
             var fileSystem = new FileSystem();
             var files = fileSystem.FindFiles("allsql", FileSet.Shallow("*.sql")).ToArray();
 
-            files.Select(Path.GetFileName).Where(x => x != "all.sql").OrderBy(x => x)
+            files.Select(Path.GetFileName)
+                .Where(x => x != "all.sql" && x != "database_schemas.sql").OrderBy(x => x)
                 .ShouldHaveTheSameElementsAs("company.sql", "issue.sql", "mt_hilo.sql", "user.sql");
 
             files.Each(file =>
@@ -154,6 +155,37 @@ namespace Marten.Testing.Schema
                 contents.ShouldContain("CREATE TABLE");
                 contents.ShouldContain("CREATE OR REPLACE FUNCTION");
             });
+        }
+
+        [Fact]
+        public void can_write_ddl_by_type_with_schema_creation()
+        {
+            using (var store = DocumentStore.For(_ =>
+            {
+                _.DatabaseSchemaName = "yet_another";
+
+                _.RegisterDocumentType<Company>();
+                _.Schema.For<User>().DatabaseSchemaName("other");
+
+                _.Events.DatabaseSchemaName = "event_store";
+                _.Events.EventMappingFor<MembersJoined>();
+
+                _.Connection(ConnectionSource.ConnectionString);
+            }))
+            {
+                store.Schema.WriteDDLByType("allsql");
+            }
+
+            const string filename = @"allsql\database_schemas.sql";
+
+            var fileSystem = new FileSystem();
+            fileSystem.FileExists(filename).ShouldBeTrue();
+
+            var contents = fileSystem.ReadStringFromFile(filename);
+            
+            contents.ShouldContain("CREATE SCHEMA event_store");
+            contents.ShouldContain("CREATE SCHEMA other");
+            contents.ShouldContain("CREATE SCHEMA yet_another");
         }
 
         [Fact]

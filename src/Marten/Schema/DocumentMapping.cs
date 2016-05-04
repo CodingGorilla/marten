@@ -282,8 +282,6 @@ namespace Marten.Schema
 
         public void WriteSchemaObjects(IDocumentSchema schema, StringWriter writer)
         {
-            EnsureDatabaseSchema.WriteSql(DatabaseSchemaName, writer);
-
             var table = ToTable(schema);
             table.Write(writer);
             writer.WriteLine();
@@ -313,11 +311,21 @@ namespace Marten.Schema
 
             connection.Execute($"DROP TABLE IF EXISTS {Table.QualifiedName} CASCADE;");
 
+            RemoveUpsertFunction(connection);
+        }
+
+        /// <summary>
+        /// Only for testing scenarios
+        /// </summary>
+        /// <param name="connection"></param>
+        public void RemoveUpsertFunction(IManagedConnection connection)
+        {
             var dropTargets = DocumentCleaner.DropFunctionSql.ToFormat(UpsertFunction.Name, UpsertFunction.Schema);
 
             var drops = connection.GetStringList(dropTargets);
             drops.Each(drop => connection.Execute(drop));
         }
+
 
         public void DeleteAllDocuments(IConnectionFactory factory)
         {
@@ -452,16 +460,20 @@ namespace Marten.Schema
             return function;
         }
 
+        public SchemaDiff CreateSchemaDiff(IDocumentSchema schema)
+        {
+            var objects = schema.DbObjects.FindSchemaObjects(this);
+            return new SchemaDiff(schema, objects, this);
+        }
+
         public void GenerateSchemaObjectsIfNecessary(AutoCreate autoCreateSchemaObjectsMode, IDocumentSchema schema, Action<string> executeSql)
         {
             if (_hasCheckedSchema) return;
 
-            try
-            {
-                var expected = ToTable(schema);
 
-                var existing = schema.TableSchema(this);
-                if (existing != null && expected.Equals(existing))
+                var diff = CreateSchemaDiff(schema); 
+
+                if (!diff.HasDifferences())
                 {
                     _hasCheckedSchema = true;
                     return;
@@ -469,22 +481,18 @@ namespace Marten.Schema
 
                 lock (_lock)
                 {
-                    existing = schema.TableSchema(this);
-                    if (existing == null || !expected.Equals(existing))
-                    {
-                        buildOrModifySchemaObjects(existing, expected, autoCreateSchemaObjectsMode, schema, executeSql);
-                    }
+                    if (_hasCheckedSchema) return;
+
+                    buildOrModifySchemaObjects(diff, autoCreateSchemaObjectsMode, schema, executeSql);
+
+                    _hasCheckedSchema = true;
                 }
-            }
-            finally
-            {
-                _hasCheckedSchema = true;
-            }
+
 
 
         }
 
-        private void buildOrModifySchemaObjects(TableDefinition existing, TableDefinition expected, AutoCreate autoCreateSchemaObjectsMode, IDocumentSchema schema, Action<string> executeSql)
+        private void buildOrModifySchemaObjects(SchemaDiff diff, AutoCreate autoCreateSchemaObjectsMode, IDocumentSchema schema, Action<string> executeSql)
         {
             if (autoCreateSchemaObjectsMode == AutoCreate.None)
             {
@@ -495,7 +503,7 @@ namespace Marten.Schema
                 throw new InvalidOperationException(message);
             }
 
-            if (existing == null)
+            if (diff.AllMissing)
             {
                 rebuildTableAndUpsertFunction(schema, executeSql);
                 return;
@@ -506,10 +514,9 @@ namespace Marten.Schema
                 throw new InvalidOperationException($"The table for document type {DocumentType.FullName} is different than the current schema table, but AutoCreateSchemaObjects = '{nameof(AutoCreate.CreateOnly)}'");
             }
 
-            var diff = new TableDiff(expected, existing);
             if (diff.CanPatch())
             {
-                diff.CreatePatch(this, executeSql);
+                diff.CreatePatch(executeSql);
             }
             else if (autoCreateSchemaObjectsMode == AutoCreate.All)
             {

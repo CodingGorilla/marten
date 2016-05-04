@@ -14,6 +14,11 @@ namespace Marten.Schema
             var parts = ParseQualifiedName(qualifiedName);
             return new TableName(parts[0], parts[1]);
         }
+
+        /// <summary>
+        /// Name that would match the relowner column in idx.indrelid::regclass
+        /// </summary>
+        public string OwnerName => Schema == StoreOptions.DefaultDatabaseSchemaName ? Name : QualifiedName;
     }
 
     public class FunctionName : QualifiedDatabaseName
@@ -70,6 +75,11 @@ namespace Marten.Schema
         protected static string[] ParseQualifiedName(string qualifiedName)
         {
             var parts = qualifiedName.Split('.');
+            if (parts.Length == 1)
+            {
+                return new string[] {StoreOptions.DefaultDatabaseSchemaName, qualifiedName};
+            }
+
             if (parts.Length != 2)
             {
                 throw new InvalidOperationException(

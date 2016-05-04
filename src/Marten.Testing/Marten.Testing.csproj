@@ -48,6 +48,7 @@
     <Compile Include="Bugs\ability_to_persist_generic_types.cs" />
     <Compile Include="Bugs\ability_to_persist_nested_types_Tests.cs" />
     <Compile Include="Bugs\Bug118_bad_exception_message_Tests.cs" />
+    <Compile Include="Bugs\Bug_339_async_cache_problem.cs" />
     <Compile Include="Bugs\Bug145_table_getting_erroneously_regenerated_Tests.cs" />
     <Compile Include="Bugs\Bug_130_enable_case_insensitive_custom_sql_queries_Tests.cs" />
     <Compile Include="Bugs\Bug_127_do_not_recreate_a_table_with_duplicated_string_field_Tests.cs" />
@@ -157,6 +158,7 @@
     <Compile Include="Linq\invoking_queryable_through_to_list_async_Tests.cs" />
     <Compile Include="Linq\invoking_query_with_select_Tests.cs" />
     <Compile Include="Linq\ExpressionExtensionsTests.cs" />
+    <Compile Include="Linq\invoking_query_with_statistics.cs" />
     <Compile Include="Linq\previewing_the_command_from_a_queryable_Tests.cs" />
     <Compile Include="Linq\query_against_dateoffset_Tests.cs" />
     <Compile Include="Linq\query_for_json_format.cs" />
@@ -175,6 +177,9 @@
     <Compile Include="Linq\query_with_enums_Tests.cs" />
     <Compile Include="Linq\query_with_nested_boolean_logic_Tests.cs" />
     <Compile Include="Linq\query_with_nullable_types_Tests.cs" />
+    <Compile Include="Schema\DbObjectsTests.cs" />
+    <Compile Include="Schema\SchemaDiff_Generation_Tests.cs" />
+    <Compile Include="Schema\TableNameTests.cs" />
     <Compile Include="Services\SelectTransformerTests.cs" />
     <Compile Include="Linq\select_transformations_Tests.cs" />
     <Compile Include="Linq\SingleFieldSelectorTests.cs" />
