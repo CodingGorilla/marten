@@ -1,0 +1,180 @@
+﻿<error errorId="8142c32c-0d8e-498b-a438-6831aa7b4a5a" application="/LM/W3SVC/2/ROOT" host="CGPC" type="Npgsql.NpgsqlException" message="42701: column &quot;id&quot; specified more than once" source="Npgsql" detail="Marten.Schema.MartenSchemaException: DDL Execution Failed for document type DinnerParty.Models.UserModel!&#xA;&#xA;&#xD;&#xA;DO $$&#xD;&#xA;BEGIN&#xD;&#xA;    IF NOT EXISTS(&#xD;&#xA;        SELECT schema_name&#xD;&#xA;          FROM information_schema.schemata&#xD;&#xA;          WHERE schema_name = 'public'&#xD;&#xA;      )&#xD;&#xA;    THEN&#xD;&#xA;      EXECUTE 'CREATE SCHEMA public';&#xD;&#xA;    END IF;&#xD;&#xA;END&#xD;&#xA;$$;&#xD;&#xA;            &#xD;&#xA;DROP TABLE IF EXISTS public.mt_doc_usermodel CASCADE;&#xD;&#xA;CREATE TABLE public.mt_doc_usermodel (&#xD;&#xA;    &quot;id&quot;              uuid CONSTRAINT pk_mt_doc_usermodel PRIMARY KEY,&#xD;&#xA;    &quot;data&quot;            jsonb NOT NULL,&#xD;&#xA;    &quot;e_mail_address&quot;  varchar ,&#xD;&#xA;    &quot;id&quot;              uuid ,&#xD;&#xA;    &quot;username&quot;        varchar &#xD;&#xA;);&#xD;&#xA;&#xD;&#xA;&#xD;&#xA;CREATE OR REPLACE FUNCTION public.mt_upsert_usermodel(arg_e_mail_address varchar, arg_id uuid, arg_username varchar, doc JSONB, docId uuid) RETURNS VOID AS&#xD;&#xA;$$&#xD;&#xA;BEGIN&#xD;&#xA;LOCK TABLE public.mt_doc_usermodel IN SHARE ROW EXCLUSIVE MODE;&#xD;&#xA;  WITH upsert AS (UPDATE public.mt_doc_usermodel SET &quot;e_mail_address&quot; = arg_e_mail_address, &quot;username&quot; = arg_username, &quot;data&quot; = doc WHERE id=docId RETURNING *) &#xD;&#xA;  INSERT INTO public.mt_doc_usermodel (&quot;e_mail_address&quot;, &quot;id&quot;, &quot;username&quot;, &quot;data&quot;, &quot;id&quot;)&#xD;&#xA;  SELECT arg_e_mail_address, arg_id, arg_username, doc, docId WHERE NOT EXISTS (SELECT * FROM upsert);&#xD;&#xA;END;&#xD;&#xA;$$ LANGUAGE plpgsql;&#xD;&#xA;&#xD;&#xA;CREATE INDEX mt_doc_usermodel_idx_id ON public.mt_doc_usermodel (&quot;id&quot;);&#xD;&#xA;&#xD;&#xA;CREATE INDEX mt_doc_usermodel_idx_username ON public.mt_doc_usermodel (&quot;username&quot;);&#xD;&#xA;&#xD;&#xA;CREATE INDEX mt_doc_usermodel_idx_e_mail_address ON public.mt_doc_usermodel (&quot;e_mail_address&quot;);&#xD;&#xA;&#xD;&#xA;&#xD;&#xA; ---&gt; Npgsql.NpgsqlException: 42701: column &quot;id&quot; specified more than once&#xD;&#xA;   at Npgsql.NpgsqlConnector.DoReadSingleMessage(DataRowLoadingMode dataRowLoadingMode, Boolean returnNullForAsyncMessage, Boolean isPrependedMessage)&#xD;&#xA;   at Npgsql.NpgsqlConnector.ReadSingleMessage(DataRowLoadingMode dataRowLoadingMode, Boolean returnNullForAsyncMessage)&#xD;&#xA;   at Npgsql.NpgsqlConnector.SkipUntil(BackendMessageCode stopAt1, BackendMessageCode stopAt2)&#xD;&#xA;   at Npgsql.NpgsqlDataReader.NextResultInternal()&#xD;&#xA;   at Npgsql.NpgsqlDataReader.Init()&#xD;&#xA;   at Npgsql.NpgsqlCommand.Execute(CommandBehavior behavior)&#xD;&#xA;   at Npgsql.NpgsqlCommand.ExecuteNonQueryInternal()&#xD;&#xA;   at Marten.ConnectionFactoryExtensions.RunSql(IConnectionFactory factory, String sql)&#xD;&#xA;   at Marten.Schema.DocumentSchema.&lt;&gt;c__DisplayClass15_0.&lt;buildSchemaObjectsIfNecessary&gt;b__0(String sql)&#xD;&#xA;   --- End of inner exception stack trace ---&#xD;&#xA;   at Marten.Schema.DocumentSchema.&lt;&gt;c__DisplayClass15_0.&lt;buildSchemaObjectsIfNecessary&gt;b__0(String sql)&#xD;&#xA;   at Marten.Schema.DocumentMapping.buildOrModifySchemaObjects(TableDefinition existing, TableDefinition expected, AutoCreate autoCreateSchemaObjectsMode, IDocumentSchema schema, Action`1 executeSql)&#xD;&#xA;   at Marten.Schema.DocumentMapping.GenerateSchemaObjectsIfNecessary(AutoCreate autoCreateSchemaObjectsMode, IDocumentSchema schema, Action`1 executeSql)&#xD;&#xA;   at Baseline.GenericEnumerableExtensions.Each[T](IEnumerable`1 values, Action`1 eachAction)&#xD;&#xA;   at Marten.Schema.DocumentSchema.&lt;&gt;c__DisplayClass14_0.&lt;StorageFor&gt;b__0(Type type)&#xD;&#xA;   at System.Collections.Concurrent.ConcurrentDictionary`2.GetOrAdd(TKey key, Func`2 valueFactory)&#xD;&#xA;   at Marten.Linq.QueryHandlers.QueryHandlerFactory.HandlerForSingleQuery[T](QueryModel model, IIncludeJoin[] joins, Boolean returnDefaultWhenEmpty)&#xD;&#xA;   at Marten.Linq.MartenQueryExecutor.Remotion.Linq.IQueryExecutor.ExecuteSingle[T](QueryModel queryModel, Boolean returnDefaultWhenEmpty)&#xD;&#xA;   at Remotion.Linq.Clauses.StreamedData.StreamedSingleValueInfo.ExecuteSingleQueryModel[T](QueryModel queryModel, IQueryExecutor executor)&#xD;&#xA;   at Remotion.Linq.Clauses.StreamedData.StreamedSingleValueInfo.ExecuteQueryModel(QueryModel queryModel, IQueryExecutor executor)&#xD;&#xA;   at Remotion.Linq.QueryProviderBase.System.Linq.IQueryProvider.Execute[TResult](Expression expression)&#xD;&#xA;   at DinnerParty.UserMapper.ValidateRegisterNewUser(RegisterModel newUser) in C:\Users\codin\Github\DinnerParty\src\UserMapper.cs:line 49&#xD;&#xA;   at DinnerParty.Modules.AccountModule.&lt;&gt;c__DisplayClass0_0.&lt;.ctor&gt;b__4(Object parameters) in C:\Users\codin\Github\DinnerParty\src\Modules\AccountModule.cs:line 107&#xD;&#xA;   at Nancy.Routing.Route.&lt;&gt;c__DisplayClass4.&lt;Wrap&gt;b__3(Object parameters, CancellationToken context)" time="2016-05-03T13:42:17.9781582Z">
+  <serverVariables>
+    <item name="ALL_HTTP">
+      <value string="HTTP_CACHE_CONTROL:no-cache&#xD;&#xA;HTTP_CONNECTION:Keep-Alive&#xD;&#xA;HTTP_CONTENT_LENGTH:117&#xD;&#xA;HTTP_CONTENT_TYPE:application/x-www-form-urlencoded&#xD;&#xA;HTTP_ACCEPT:text/html, application/xhtml+xml, image/jxr, */*&#xD;&#xA;HTTP_ACCEPT_ENCODING:gzip, deflate&#xD;&#xA;HTTP_ACCEPT_LANGUAGE:en-US,en;q=0.5&#xD;&#xA;HTTP_HOST:localhost:63155&#xD;&#xA;HTTP_REFERER:http://localhost:63155/account/register&#xD;&#xA;HTTP_USER_AGENT:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.82 Safari/537.36 Edge/14.14332&#xD;&#xA;" />
+    </item>
+    <item name="ALL_RAW">
+      <value string="Cache-Control: no-cache&#xD;&#xA;Connection: Keep-Alive&#xD;&#xA;Content-Length: 117&#xD;&#xA;Content-Type: application/x-www-form-urlencoded&#xD;&#xA;Accept: text/html, application/xhtml+xml, image/jxr, */*&#xD;&#xA;Accept-Encoding: gzip, deflate&#xD;&#xA;Accept-Language: en-US,en;q=0.5&#xD;&#xA;Host: localhost:63155&#xD;&#xA;Referer: http://localhost:63155/account/register&#xD;&#xA;User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.82 Safari/537.36 Edge/14.14332&#xD;&#xA;" />
+    </item>
+    <item name="APPL_MD_PATH">
+      <value string="/LM/W3SVC/2/ROOT" />
+    </item>
+    <item name="APPL_PHYSICAL_PATH">
+      <value string="C:\Users\codin\Github\DinnerParty\src\" />
+    </item>
+    <item name="AUTH_TYPE">
+      <value string="" />
+    </item>
+    <item name="AUTH_USER">
+      <value string="" />
+    </item>
+    <item name="AUTH_PASSWORD">
+      <value string="*****" />
+    </item>
+    <item name="LOGON_USER">
+      <value string="" />
+    </item>
+    <item name="REMOTE_USER">
+      <value string="" />
+    </item>
+    <item name="CERT_COOKIE">
+      <value string="" />
+    </item>
+    <item name="CERT_FLAGS">
+      <value string="" />
+    </item>
+    <item name="CERT_ISSUER">
+      <value string="" />
+    </item>
+    <item name="CERT_KEYSIZE">
+      <value string="" />
+    </item>
+    <item name="CERT_SECRETKEYSIZE">
+      <value string="" />
+    </item>
+    <item name="CERT_SERIALNUMBER">
+      <value string="" />
+    </item>
+    <item name="CERT_SERVER_ISSUER">
+      <value string="" />
+    </item>
+    <item name="CERT_SERVER_SUBJECT">
+      <value string="" />
+    </item>
+    <item name="CERT_SUBJECT">
+      <value string="" />
+    </item>
+    <item name="CONTENT_LENGTH">
+      <value string="117" />
+    </item>
+    <item name="CONTENT_TYPE">
+      <value string="application/x-www-form-urlencoded" />
+    </item>
+    <item name="GATEWAY_INTERFACE">
+      <value string="CGI/1.1" />
+    </item>
+    <item name="HTTPS">
+      <value string="off" />
+    </item>
+    <item name="HTTPS_KEYSIZE">
+      <value string="" />
+    </item>
+    <item name="HTTPS_SECRETKEYSIZE">
+      <value string="" />
+    </item>
+    <item name="HTTPS_SERVER_ISSUER">
+      <value string="" />
+    </item>
+    <item name="HTTPS_SERVER_SUBJECT">
+      <value string="" />
+    </item>
+    <item name="INSTANCE_ID">
+      <value string="2" />
+    </item>
+    <item name="INSTANCE_META_PATH">
+      <value string="/LM/W3SVC/2" />
+    </item>
+    <item name="LOCAL_ADDR">
+      <value string="::1" />
+    </item>
+    <item name="PATH_INFO">
+      <value string="/account/register" />
+    </item>
+    <item name="PATH_TRANSLATED">
+      <value string="C:\Users\codin\Github\DinnerParty\src\account\register" />
+    </item>
+    <item name="QUERY_STRING">
+      <value string="" />
+    </item>
+    <item name="REMOTE_ADDR">
+      <value string="::1" />
+    </item>
+    <item name="REMOTE_HOST">
+      <value string="::1" />
+    </item>
+    <item name="REMOTE_PORT">
+      <value string="18155" />
+    </item>
+    <item name="REQUEST_METHOD">
+      <value string="POST" />
+    </item>
+    <item name="SCRIPT_NAME">
+      <value string="/account/register" />
+    </item>
+    <item name="SERVER_NAME">
+      <value string="localhost" />
+    </item>
+    <item name="SERVER_PORT">
+      <value string="63155" />
+    </item>
+    <item name="SERVER_PORT_SECURE">
+      <value string="0" />
+    </item>
+    <item name="SERVER_PROTOCOL">
+      <value string="HTTP/1.1" />
+    </item>
+    <item name="SERVER_SOFTWARE">
+      <value string="Microsoft-IIS/10.0" />
+    </item>
+    <item name="URL">
+      <value string="/account/register" />
+    </item>
+    <item name="HTTP_CACHE_CONTROL">
+      <value string="no-cache" />
+    </item>
+    <item name="HTTP_CONNECTION">
+      <value string="Keep-Alive" />
+    </item>
+    <item name="HTTP_CONTENT_LENGTH">
+      <value string="117" />
+    </item>
+    <item name="HTTP_CONTENT_TYPE">
+      <value string="application/x-www-form-urlencoded" />
+    </item>
+    <item name="HTTP_ACCEPT">
+      <value string="text/html, application/xhtml+xml, image/jxr, */*" />
+    </item>
+    <item name="HTTP_ACCEPT_ENCODING">
+      <value string="gzip, deflate" />
+    </item>
+    <item name="HTTP_ACCEPT_LANGUAGE">
+      <value string="en-US,en;q=0.5" />
+    </item>
+    <item name="HTTP_HOST">
+      <value string="localhost:63155" />
+    </item>
+    <item name="HTTP_REFERER">
+      <value string="http://localhost:63155/account/register" />
+    </item>
+    <item name="HTTP_USER_AGENT">
+      <value string="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.82 Safari/537.36 Edge/14.14332" />
+    </item>
+  </serverVariables>
+  <form>
+    <item name="UserName">
+      <value string="CodingGorilla" />
+    </item>
+    <item name="Name">
+      <value string="Mark Warpool" />
+    </item>
+    <item name="Email">
+      <value string="codinggorilla@outlook.com" />
+    </item>
+    <item name="Password">
+      <value string="password" />
+    </item>
+    <item name="ConfirmPassword">
+      <value string="password" />
+    </item>
+  </form>
+</error>
