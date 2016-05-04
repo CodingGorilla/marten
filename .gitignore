@@ -206,3 +206,4 @@ paket.lock
 *.DotSettings
 
 /results
+/App_Data
