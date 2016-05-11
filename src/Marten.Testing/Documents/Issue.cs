@@ -2,6 +2,7 @@
 
 namespace Marten.Testing.Documents
 {
+    // SAMPLE: Issue
     public class Issue
     {
         public Issue()
@@ -15,8 +16,11 @@ namespace Marten.Testing.Documents
 
         public string Title { get; set; }
 
+        public int Number { get; set; }
+
         public Guid? AssigneeId { get; set; }
 
         public Guid? ReporterId { get; set; }
     }
+    // ENDSAMPLE
 }

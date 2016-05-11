@@ -14,26 +14,6 @@ using Marten.Services.Includes;
 
 namespace Marten.Events
 {
-
-    /*
-    1. Event to Event mapping -->
-    TransformInline(ITransformer<TEvent, TView>)
-    // won't need a live transform, just do that w/ TransformTo()
-
-    AggregateStreamsInlineWith<T>()--> and return the Aggregator<T> with chaining to edit it
-    --> live ones could be done simpler
-    AggregateStreamsAsyncWith<T>() --> and return the Aggregator<T>
-    ProjectAcrossStreams<T>(IAggregateFinder<T> finder) --> and return the Aggregator<T>
-
-
-    */
-
-    public interface IProjections
-    {
-        IList<IProjection> Inlines { get; }
-    }
-
-
     // TODO -- try to eliminate the IDocumentMapping implementation here
     // just making things ugly
     public class EventGraph : IDocumentMapping, IEventStoreConfiguration, IProjections
@@ -101,6 +81,7 @@ namespace Marten.Events
         public Type DocumentType { get; } = typeof (EventStream);
 
         public TableName Table => new TableName(DatabaseSchemaName, "mt_streams");
+        public TableName RollingBufferTable => new TableName(DatabaseSchemaName, "mt_rolling_buffer");
 
         public string DatabaseSchemaName
         {
@@ -124,6 +105,7 @@ namespace Marten.Events
             _checkedSchema = true;
 
             var schemaExists = schema.DbObjects.TableExists(Table);
+
             if (schemaExists) return;
 
             if (autoCreateSchemaObjectsMode == AutoCreate.None)
@@ -162,6 +144,7 @@ namespace Marten.Events
             writer.WriteSql(DatabaseSchemaName, "mt_initialize_projections");
             writer.WriteSql(DatabaseSchemaName, "mt_apply_transform");
             writer.WriteSql(DatabaseSchemaName, "mt_apply_aggregation");
+            writer.WriteSql(DatabaseSchemaName, "mt_rolling_buffer");
         }
 
         public IField FieldFor(IEnumerable<MemberInfo> members)
@@ -244,6 +227,11 @@ namespace Marten.Events
             _inlineProjections.Add(projection);
         }
 
+        public bool AsyncProjectionsEnabled { get; set; }
+        public bool JavascriptProjectionsEnabled { get; set; }
+
+
+        public int AsyncProjectionBufferTableSize { get; set; } = 1000;
 
         public string AggregateAliasFor(Type aggregateType)
         {

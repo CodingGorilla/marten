@@ -7,17 +7,31 @@ namespace Marten.Services
 {
     public class TransactionState : IDisposable
     {
+        private readonly CommandRunnerMode _mode;
         private readonly IsolationLevel _isolationLevel;
-
 
         public TransactionState(IConnectionFactory factory, CommandRunnerMode mode, IsolationLevel isolationLevel)
         {
+            _mode = mode;
             _isolationLevel = isolationLevel;
             Connection = factory.Create();
             Connection.Open();
-            if (mode == CommandRunnerMode.Transactional)
+            BeginTransaction();
+        }
+
+        private void BeginTransaction()
+        {
+            if (_mode == CommandRunnerMode.Transactional || _mode == CommandRunnerMode.ReadOnly)
             {
-                Transaction = Connection.BeginTransaction(isolationLevel);
+                Transaction = Connection.BeginTransaction(_isolationLevel);
+            }
+            if (_mode == CommandRunnerMode.ReadOnly)
+            {
+                using (var cmd = new NpgsqlCommand("SET TRANSACTION READ ONLY;"))
+                {
+                    Apply(cmd);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
 
@@ -34,18 +48,18 @@ namespace Marten.Services
         public void Commit()
         {
             Transaction.Commit();
-            Transaction = Connection.BeginTransaction(_isolationLevel);
+            BeginTransaction();
         }
 
         public void Rollback()
         {
             Transaction.Rollback();
-            Transaction = Connection.BeginTransaction(_isolationLevel);
+            BeginTransaction();
         }
 
         public void Dispose()
         {
-            Connection.Close();
+            Transaction?.SafeDispose();
             Connection.SafeDispose();
         }
 

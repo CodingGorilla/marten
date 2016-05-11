@@ -48,6 +48,7 @@
     <Compile Include="Bugs\ability_to_persist_generic_types.cs" />
     <Compile Include="Bugs\ability_to_persist_nested_types_Tests.cs" />
     <Compile Include="Bugs\Bug118_bad_exception_message_Tests.cs" />
+    <Compile Include="Bugs\Bug_337_certain_boolean_searches_are_not_using_searchable_field.cs" />
     <Compile Include="Bugs\Bug_339_async_cache_problem.cs" />
     <Compile Include="Bugs\Bug145_table_getting_erroneously_regenerated_Tests.cs" />
     <Compile Include="Bugs\Bug_130_enable_case_insensitive_custom_sql_queries_Tests.cs" />
@@ -57,8 +58,11 @@
     <Compile Include="Bugs\Bug_261_double_take_or_skip.cs" />
     <Compile Include="Bugs\Bug_276_Query_by_abstract_type_in_hierarchy.cs" />
     <Compile Include="Bugs\Bug_336_completely_remove_crosses_schema_lines.cs" />
+    <Compile Include="Events\end_to_end_event_capture_and_fetching_the_stream_with_rolling_buffer_Tests.cs" />
+    <Compile Include="Events\EventStreamStorageTests.cs" />
     <Compile Include="Events\fetch_a_single_event_with_metadata.cs" />
     <Compile Include="Events\get_committed_events_from_listener_Tests.cs" />
+    <Compile Include="Events\insert_to_rolling_buffer_table.cs" />
     <Compile Include="Events\marking_stream_as_isnew_on_capture.cs" />
     <Compile Include="Events\Projections\AggregationStepTests.cs" />
     <Compile Include="Events\Projections\AggregatorTests.cs" />
@@ -67,8 +71,10 @@
     <Compile Include="Events\Projections\MonsterSlayed.cs" />
     <Compile Include="Events\Projections\QuestParty.cs" />
     <Compile Include="Events\Projections\AggregateFinderTests.cs" />
+    <Compile Include="Events\working_with_the_rolling_buffer_objects.cs" />
     <Compile Include="Examples\event_store_quickstart.cs" />
-    <Compile Include="fetching_stream_state.cs" />
+    <Compile Include="Events\fetching_stream_state.cs" />
+    <Compile Include="Examples\ForeignKeyExamples.cs" />
     <Compile Include="Fixtures\EventStore\InlineAggregationFixture.cs" />
     <Compile Include="IntDoc.cs" />
     <Compile Include="IntegratedFixture.cs" />
@@ -180,6 +186,7 @@
     <Compile Include="Schema\DbObjectsTests.cs" />
     <Compile Include="Schema\SchemaDiff_Generation_Tests.cs" />
     <Compile Include="Schema\TableNameTests.cs" />
+    <Compile Include="Services\Includes\end_to_end_query_with_compiled_include_Tests.cs" />
     <Compile Include="Services\SelectTransformerTests.cs" />
     <Compile Include="Linq\select_transformations_Tests.cs" />
     <Compile Include="Linq\SingleFieldSelectorTests.cs" />

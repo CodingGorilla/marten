@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Baseline;
 using Marten.Schema;
 using Marten.Services;
@@ -11,11 +12,26 @@ namespace Marten.Events
     {
         private readonly EventGraph _graph;
 
-        private FunctionName AppendEventFunction => new FunctionName(_graph.DatabaseSchemaName, "mt_append_event");
+        public FunctionName AppendEventFunction { get; }
 
         public EventStreamStorage(EventGraph graph)
         {
             _graph = graph;
+
+            if (_graph.JavascriptProjectionsEnabled)
+            {
+                throw new NotSupportedException("Marten does not yet support Javascript projections");
+            }
+
+
+            if (_graph.AsyncProjectionsEnabled)
+            {
+                AppendEventFunction = new FunctionName(_graph.DatabaseSchemaName, "mt_append_event_with_buffering");
+            }
+            else
+            {
+                AppendEventFunction = new FunctionName(_graph.DatabaseSchemaName, "mt_append_event");
+            }
         }
 
         public Type DocumentType { get; } = typeof (EventStream);
@@ -52,17 +68,17 @@ namespace Marten.Events
 
             var streamTypeName = stream.AggregateType == null ? null : _graph.AggregateAliasFor(stream.AggregateType);
 
-            stream.Events.Each(@event =>
-            {
-                var mapping = _graph.EventMappingFor(@event.Data.GetType());
+            var eventTypes = stream.Events.Select(x => _graph.EventMappingFor(x.Data.GetType()).EventTypeName).ToArray();
+            var bodies = stream.Events.Select(x => batch.Serializer.ToJson(x.Data)).ToArray();
+            var ids = stream.Events.Select(x => x.Id).ToArray();
 
-                batch.Sproc(AppendEventFunction)
+            batch.Sproc(AppendEventFunction)
                     .Param("stream", stream.Id)
                     .Param("stream_type", streamTypeName)
-                    .Param("event_id", @event.Id)
-                    .Param("event_type", mapping.EventTypeName)
-                    .JsonEntity("body", @event.Data);
-            });
+                    .Param("event_ids", ids)
+                    .Param("event_types", eventTypes)
+                    .JsonBodies("bodies", bodies);
+
         }
 
         public void RegisterUpdate(UpdateBatch batch, object entity, string json)

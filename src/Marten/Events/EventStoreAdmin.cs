@@ -15,11 +15,13 @@ namespace Marten.Events
         private readonly StoreOptions _options;
         private readonly ISerializer _serializer;
 
-        private TableName ModulesTable => new TableName(_options.Events.DatabaseSchemaName, "mt_modules");
+        public TableName ModulesTable => new TableName(_options.Events.DatabaseSchemaName, "mt_modules");
 
-        private FunctionName LoadProjectionBodyFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_load_projection_body");
-        private FunctionName InitializeProjectionsFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_initialize_projections");
-        private FunctionName GetProjectionUsageFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_get_projection_usage");
+        public FunctionName LoadProjectionBodyFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_load_projection_body");
+        public FunctionName InitializeProjectionsFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_initialize_projections");
+        public FunctionName GetProjectionUsageFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_get_projection_usage");
+
+        public FunctionName ResetRollingBufferSizeFunction => new FunctionName(_options.Events.DatabaseSchemaName, "mt_reset_rolling_buffer_size");
 
         public EventStoreAdmin(IDocumentSchema schema, IConnectionFactory connectionFactory, StoreOptions options, ISerializer serializer)
         {
@@ -88,6 +90,16 @@ namespace Marten.Events
                     cmd.CallsSproc(InitializeProjectionsFunction)
                        .With("overwrite", overwrite).ExecuteNonQuery();
                 });
+
+                if (_schema.Events.AsyncProjectionsEnabled)
+                {
+                    connection.Execute(cmd =>
+                    {
+                        cmd.CallsSproc(ResetRollingBufferSizeFunction)
+                            .With("size", _schema.Events.AsyncProjectionBufferTableSize)
+                            .ExecuteNonQuery();
+                    });
+                }
             }
 
             return ProjectionUsages();
@@ -105,6 +117,7 @@ namespace Marten.Events
             return _serializer.FromJson<ProjectionUsage[]>(json);
         }
 
+
         [Obsolete("This should be going away now that EventGraph puts things together itself")]
         public void RebuildEventStoreSchema()
         {
@@ -112,6 +125,7 @@ namespace Marten.Events
             runScript("mt_initialize_projections");
             runScript("mt_apply_transform");
             runScript("mt_apply_aggregation");
+            
 
             var js = SchemaBuilder.GetJavascript(_options, "mt_transforms");
 
@@ -137,6 +151,34 @@ namespace Marten.Events
             catch (Exception e)
             {
                 throw new MartenSchemaException(sql, e);
+            }
+        }
+
+        public void InitializeTheRollingBuffer()
+        {
+            runScript("mt_rolling_buffer");
+
+            var functionName = new FunctionName(_options.Events.DatabaseSchemaName, "mt_seed_rolling_buffer");
+
+            using (var conn = new ManagedConnection(_connectionFactory))
+            {
+                conn.Execute(cmd =>
+                {
+                    cmd.CallsSproc(functionName);
+                });
+            }
+        }
+
+        public void ResetTheRollingBufferSize(int size)
+        {
+            var functionName = new FunctionName(_options.Events.DatabaseSchemaName, "mt_reset_rolling_buffer_size");
+
+            using (var conn = new ManagedConnection(_connectionFactory))
+            {
+                conn.Execute(cmd =>
+                {
+                    cmd.CallsSproc(functionName).AddParameter("size", size);
+                });
             }
         }
     }
