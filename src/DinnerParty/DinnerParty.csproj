@@ -54,56 +54,69 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="AjaxMin, Version=5.14.5506.26196, Culture=neutral, PublicKeyToken=21ef50ce11b5d80f, processorArchitecture=MSIL">
-      <HintPath>packages\AjaxMin.5.14.5506.26202\lib\net40\AjaxMin.dll</HintPath>
+      <HintPath>..\..\packages\AjaxMin.5.14.5506.26202\lib\net40\AjaxMin.dll</HintPath>
       <Private>True</Private>
-    </Reference>
+	  <Paket>True</Paket>
+	</Reference>
     <Reference Include="Cassette, Version=2.4.2.13844, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Cassette.2.4.2\lib\net40-client\Cassette.dll</HintPath>
+      <HintPath>..\..\packages\Cassette.2.4.2\lib\net40-client\Cassette.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Cassette.Nancy, Version=2.1.1.18130, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Cassette.Nancy.2.2.1\lib\net40\Cassette.Nancy.dll</HintPath>
+      <HintPath>..\..\packages\Cassette.Nancy.2.2.1\lib\net40\Cassette.Nancy.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Elmah">
-      <HintPath>packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
+      <HintPath>..\..\packages\elmah.corelibrary.1.2.2\lib\Elmah.dll</HintPath>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Nancy, Version=1.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nancy.1.4.3\lib\net40\Nancy.dll</HintPath>
+      <HintPath>..\..\packages\Nancy.1.4.3\lib\net40\Nancy.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Nancy.Authentication.Forms, Version=1.4.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nancy.Authentication.Forms.1.4.1\lib\net40\Nancy.Authentication.Forms.dll</HintPath>
+      <HintPath>..\..\packages\Nancy.Authentication.Forms.1.4.1\lib\net40\Nancy.Authentication.Forms.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Nancy.Hosting.Aspnet, Version=1.4.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nancy.Hosting.Aspnet.1.4.1\lib\net40\Nancy.Hosting.Aspnet.dll</HintPath>
+      <HintPath>..\..\packages\Nancy.Hosting.Aspnet.1.4.1\lib\net40\Nancy.Hosting.Aspnet.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Nancy.RouteHelpers, Version=1.0.8.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>packages\Nancy.RouteHelpers.1.0.8\lib\Nancy.RouteHelpers.dll</HintPath>
+      <HintPath>..\..\packages\Nancy.RouteHelpers.1.0.8\lib\Nancy.RouteHelpers.dll</HintPath>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Nancy.Validation.DataAnnotations, Version=1.4.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nancy.Validation.DataAnnotations.1.4.1\lib\net40\Nancy.Validation.DataAnnotations.dll</HintPath>
+      <HintPath>..\..\packages\Nancy.Validation.DataAnnotations.1.4.1\lib\net40\Nancy.Validation.DataAnnotations.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Nancy.ViewEngines.Razor, Version=1.4.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\Nancy.Viewengines.Razor.1.4.3\lib\net40\Nancy.ViewEngines.Razor.dll</HintPath>
+      <HintPath>..\..\packages\Nancy.Viewengines.Razor.1.4.3\lib\net40\Nancy.ViewEngines.Razor.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>packages\Newtonsoft.Json.8.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\..\packages\Newtonsoft.Json.8.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>packages\NLog.4.3.3\lib\net40\NLog.dll</HintPath>
+      <HintPath>..\..\packages\NLog.4.3.3\lib\net40\NLog.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="PagedList, Version=1.17.0.0, Culture=neutral, PublicKeyToken=abbb863e9397c5e1, processorArchitecture=MSIL">
-      <HintPath>packages\PagedList.1.17.0.0\lib\net40\PagedList.dll</HintPath>
+      <HintPath>..\..\packages\PagedList.1.17.0.0\lib\net40\PagedList.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -116,8 +129,9 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Web.Razor, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.AspNet.Razor.2.0.30506.0\lib\net40\System.Web.Razor.dll</HintPath>
+      <HintPath>..\..\packages\Microsoft.AspNet.Razor.2.0.30506.0\lib\net40\System.Web.Razor.dll</HintPath>
       <Private>True</Private>
+	  <Paket>True</Paket>
     </Reference>
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
@@ -191,6 +205,7 @@
     <Content Include="assets\stylesheets\images\yahoo.gif" />
     <Content Include="assets\stylesheets\images\yahoo_login.png" />
     <Content Include="assets\stylesheets\main.css" />
+    <Content Include="paket.references" />
     <None Include="public\favicon.ico" />
     <Content Include="Content\Scripts\date.format.js" />
     <Content Include="Content\Scripts\geo-polyfill.js" />
@@ -311,9 +326,6 @@
     <Compile Include="Modules\ServicesModule.cs" />
     <Compile Include="UserIdentity.cs" />
     <Compile Include="UserMapper.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Home\Index.cshtml" />
