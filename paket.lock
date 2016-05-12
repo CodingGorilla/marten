@@ -49,6 +49,7 @@ NUGET
       Microsoft.AspNet.Razor (>= 2.0.30506) - framework: >= net40
       Nancy (>= 1.4.3)
     Newtonsoft.Json (8.0.2)
+    NLog (4.3.3)
     Npgsql (3.0.4)
     NSubstitute (1.9.2)
     Octokit (0.16)

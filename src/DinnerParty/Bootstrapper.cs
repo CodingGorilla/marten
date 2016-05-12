@@ -6,6 +6,7 @@ using DinnerParty.Models.CustomAnnotations;
 using Nancy.Bootstrapper;
 using Nancy.Diagnostics;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using DinnerParty.Models;
 using DinnerParty.Models.Marten;
@@ -89,7 +90,9 @@ namespace DinnerParty
             nancyConventions.StaticContentsConventions.Add(Nancy.Conventions.StaticContentConventionBuilder.AddDirectory("/", "public"));
         }
 
-        protected override Nancy.Diagnostics.DiagnosticsConfiguration DiagnosticsConfiguration => new DiagnosticsConfiguration { Password = @"nancy" };
+        protected override DiagnosticsConfiguration DiagnosticsConfiguration => new DiagnosticsConfiguration { Password = @"nancy" };
+
+        protected override IEnumerable<Type> ViewEngines => new[] { typeof(Nancy.ViewEngines.Razor.RazorViewEngine) };
 
         private void CleanUpDB(DocumentStore documentStore)
         {

@@ -28,6 +28,6 @@ nuget Nancy.Authentication.Forms
 nuget Nancy.Hosting.Aspnet
 nuget Nancy.RouteHelpers
 nuget Nancy.Validation.DataAnnotations
-nuget Nancy.Viewengines.Razor 1.4.3
+nuget Nancy.Viewengines.Razor
 nuget NLog
 nuget PagedList
