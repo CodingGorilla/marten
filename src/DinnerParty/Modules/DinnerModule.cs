@@ -117,7 +117,7 @@ namespace DinnerParty.Modules
                         documentSession.Store(dinner);
                         documentSession.SaveChanges();
 
-                        return this.Response.AsRedirect(dinner.DinnerID);
+                        return this.Response.AsRedirect("/" + dinner.DinnerID);
                     }
 
                     base.Page.Title = "Host a Nerd Dinner";
@@ -241,9 +241,14 @@ namespace DinnerParty.Modules
                     string nerdName = this.Context.CurrentUser.UserName;
 
                     var userDinners = documentSession.Query<Dinner>()
-                                    .Where(x => x.HostedById == nerdName || x.HostedBy == nerdName || x.RSVPs.Any(r => r.AttendeeNameId == nerdName || (r.AttendeeNameId == null && r.AttendeeName == nerdName)))
-                                    .OrderBy(x => x.EventDate)
-                                    .AsEnumerable();
+                                                     .Where(x => x.HostedById == nerdName || x.HostedBy == nerdName ||
+                                                                 x.RSVPs.Any(r => r.AttendeeNameId == nerdName) ||
+                                                                 x.RSVPs.Any(
+                                                                     r =>
+                                                                         r.AttendeeNameId == null &&
+                                                                         r.AttendeeName == nerdName))
+                                                     .OrderBy(x => x.EventDate)
+                                                     .AsEnumerable();
 
                     base.Page.Title = "My Dinners";
                     base.Model.Dinners = userDinners;

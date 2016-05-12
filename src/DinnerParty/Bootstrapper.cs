@@ -1,9 +1,6 @@
 ﻿using Nancy;
 using Nancy.Authentication.Forms;
 using Nancy.TinyIoc;
-using Nancy.Validation.DataAnnotations;
-using DinnerParty.Models.CustomAnnotations;
-using Nancy.Bootstrapper;
 using Nancy.Diagnostics;
 using System;
 using System.Collections.Generic;
@@ -11,6 +8,7 @@ using System.Configuration;
 using DinnerParty.Models;
 using DinnerParty.Models.Marten;
 using Marten;
+using NLog;
 
 namespace DinnerParty
 {
@@ -23,8 +21,6 @@ namespace DinnerParty
 #if !DEBUG
             Cassette.Nancy.CassetteNancyStartup.OptimizeOutput = true;
 #endif
-            // Not needed in newer versions of Nancy.Validation?
-            //DataAnnotationsValidator.RegisterAdapter(typeof(MatchAttribute), (v, d) => new CustomDataAdapter((MatchAttribute)v));
 
             var docStore = container.Resolve<DocumentStore>("DocStore");
 
@@ -47,6 +43,7 @@ namespace DinnerParty
                 _.Connection(martenConnectionString);
                 _.Schema.Include<UserModelRegistry>();
                 _.Schema.Include<DinnersRegistry>();
+                _.Listeners.Add(new LastUpdatedSessionListener());
             });
 
             container.Register(store, "DocStore");
@@ -96,59 +93,58 @@ namespace DinnerParty
 
         private void CleanUpDB(DocumentStore documentStore)
         {
-            var docSession = documentStore.OpenSession();
-            var configInfo = docSession.Load<Config>("DinnerParty/Config");
-
-            if (configInfo == null)
+            // This can fail the very first time the application runs as it will not yet have created the necessary schema objects,
+            //  so we can just quietly move on
+            try
             {
-                configInfo = new Config();
-                configInfo.Id = "DinnerParty/Config";
-                configInfo.LastTruncateDate = DateTime.Now.AddHours(-48); //No need to delete data if config doesnt exist but setup ready for next time
+                var docSession = documentStore.OpenSession();
+                var configInfo = docSession.Load<Config>("DinnerParty/Config");
 
-                docSession.Store(configInfo);
-                docSession.SaveChanges();
+                if(configInfo == null)
+                {
+                    configInfo = new Config();
+                    configInfo.Id = "DinnerParty/Config";
+                    configInfo.LastTruncateDate = DateTime.Now.AddHours(-48);
+                    //No need to delete data if config doesnt exist but setup ready for next time
 
-                return;
+                    docSession.Store(configInfo);
+                    docSession.SaveChanges();
+
+                    return;
+                }
+
+
+                if((DateTime.Now - configInfo.LastTruncateDate).TotalHours < 24)
+                    return;
+
+                long docCount = 0, dbSize = 0;
+
+                using(var cmd = docSession.Connection.CreateCommand())
+                {
+                    var dinnerTableName = documentStore.Schema.MappingFor(typeof(Dinner)).Table.QualifiedName;
+                    cmd.CommandText = $"SELECT COUNT(*) FROM {dinnerTableName}";
+                    docCount = (long)cmd.ExecuteScalar();
+                }
+
+                using(var cmd = docSession.Connection.CreateCommand())
+                {
+                    var dinnerPartyDbName = docSession.Connection.Database;
+                    cmd.CommandText = $"SELECT pg_database_size('{dinnerPartyDbName}')";
+                    dbSize = (long)cmd.ExecuteScalar();
+
+                    configInfo.LastTruncateDate = DateTime.Now;
+                    docSession.SaveChanges();
+                }
+
+                //If database size >15mb or 1000 documents delete documents older than a week
+                if(docCount > 1000 || dbSize > 15000000) //its actually 14.3mb but goood enough
+                {
+                    docSession.DeleteWhere<Dinner>(dp => dp.LastModified < DateTime.Now.AddDays(-7));
+                }
             }
-
-
-            if ((DateTime.Now - configInfo.LastTruncateDate).TotalHours < 24)
-                return;
-
-            long docCount = 0, dbSize = 0;
-
-            using(var cmd = docSession.Connection.CreateCommand())
+            catch(Exception ex)
             {
-                var dinnerTableName = documentStore.Schema.MappingFor(typeof(Dinner)).Table.QualifiedName;
-                cmd.CommandText = $"SELECT COUNT(*) FROM {dinnerTableName}";
-                docCount = (long)cmd.ExecuteScalar();
-            }
-
-            using(var cmd = docSession.Connection.CreateCommand())
-            {
-                var dinnerPartyDbName = docSession.Connection.Database;
-                cmd.CommandText = $"SELECT pg_database_size('{dinnerPartyDbName}')";
-                dbSize = (long)cmd.ExecuteScalar();
-
-                configInfo.LastTruncateDate = DateTime.Now;
-                docSession.SaveChanges();
-            }
-
-            //If database size >15mb or 1000 documents delete documents older than a week
-            if (docCount > 1000 || dbSize > 15000000) //its actually 14.3mb but goood enough
-            {
-                //TODO: Finish this
-                //docSession.DeleteWhere<Dinner>(dp=>dp.);
-
-                //documentStore.DatabaseCommands.DeleteByIndex("Raven/DocumentsByEntityName",
-                //    new IndexQuery
-                //    {
-                //        Query = docSession.Advanced.LuceneQuery<object>()
-                //            .WhereEquals("Tag", "Dinners")
-                //            .AndAlso()
-                //            .WhereLessThan("LastModified", DateTime.Now.AddDays(-7)).ToString()
-                //    },
-                //    false);
+                LogManager.GetCurrentClassLogger().Warn(ex, "Failed to clean up database");
             }
         }
     }

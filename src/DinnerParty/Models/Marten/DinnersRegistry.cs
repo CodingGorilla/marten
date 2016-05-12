@@ -9,6 +9,7 @@ namespace DinnerParty.Models.Marten
         {
             // Generate a gin index on the Dinner JSONB data
             For<Dinner>().GinIndexJsonData();
+            For<Dinner>().Searchable(d => d.LastModified);
         }
     }
 }

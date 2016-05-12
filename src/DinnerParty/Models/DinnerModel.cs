@@ -80,6 +80,8 @@ namespace DinnerParty.Models
                 this.Address = value.Address;
             }
         }
+
+        public DateTime LastModified { get; set; }
     }
 
     public class LocationDetail

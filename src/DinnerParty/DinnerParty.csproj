@@ -244,6 +244,8 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Helpers\StringExtensions.cs" />
+    <Compile Include="Helpers\Utilities.cs" />
+    <Compile Include="HTMLExtensions\HtmlExtensions.cs" />
     <Compile Include="Models\Config.cs" />
     <Compile Include="Models\CustomAnnotations\CustomDataAdapter.cs" />
     <Compile Include="Models\CustomAnnotations\CustomDataAnnotations.cs" />
@@ -251,6 +253,7 @@
     <Compile Include="Models\ErrorModel.cs" />
     <Compile Include="Models\Home.cs" />
     <Compile Include="Models\JsonDinner.cs" />
+    <Compile Include="Models\Marten\LastUpdatedSessionListener.cs" />
     <Compile Include="Models\PageModel.cs" />
     <Compile Include="Models\LoginModel.cs" />
     <Compile Include="Models\Marten\DinnersRegistry.cs" />
