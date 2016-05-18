@@ -10,6 +10,9 @@ namespace DinnerParty.Models.Marten
     /// </summary>
     /// <remarks>
     /// See: https://github.com/JasperFx/marten/blob/master/documentation/documentation/documents/diagnostics.md#listening-for-document-store-events
+    /// 
+    /// This is redundant in newer versions (https://github.com/JasperFx/marten/commit/bf1acfa812031a5392988b753ee6f2f18ff62d0e)
+    ///  of marten as it has support for a last modified column, but this is left in for demonstration purposes.
     /// </remarks>
     public class LastUpdatedSessionListener : DocumentSessionListenerBase
     {
