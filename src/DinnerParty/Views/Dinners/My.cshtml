@@ -1,4 +1,7 @@
-﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+﻿@using System.Collections.Generic
+@using System.Linq
+@using DinnerParty.Models
+@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
 
 @{
     Layout = "_Layout.cshtml";
@@ -20,7 +23,7 @@
 		</li>    
  }
 
-	@if (((IEnumerable<DinnerParty.Models.Dinner>)Model.Dinners).Count() == 0)
+	@if (!((IEnumerable<Dinner>)Model.Dinners).Any())
  { 
 		<li>You don't own or aren't registered for any dinners.</li>
 	}
