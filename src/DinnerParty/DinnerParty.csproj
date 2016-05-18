@@ -53,9 +53,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="App_Readme\Elmah.txt">
-      <Paket>True</Paket>
-    </Content>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Nancy.ViewEngines.Razor.BuildProviders, Version=1.4.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
