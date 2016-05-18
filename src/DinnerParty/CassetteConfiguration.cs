@@ -1,5 +1,4 @@
 using Cassette;
-using Cassette.Scripts;
 using Cassette.Stylesheets;
 
 namespace DinnerParty

@@ -6,7 +6,6 @@ using Nancy.ModelBinding;
 using DinnerParty.Models;
 using System.Configuration;
 using System.Net;
-using DinnerParty.Models.Marten;
 using Marten;
 using Newtonsoft.Json;
 

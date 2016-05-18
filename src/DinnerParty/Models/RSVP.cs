@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace DinnerParty.Models
+﻿namespace DinnerParty.Models
 {
     public class RSVP
     {

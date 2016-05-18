@@ -1,10 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Reflection;
-using Nancy.Validation;
-using Nancy.Validation.DataAnnotations;
-using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace DinnerParty.Models.CustomAnnotations
 {
