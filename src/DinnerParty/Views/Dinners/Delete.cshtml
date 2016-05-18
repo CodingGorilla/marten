@@ -1,4 +1,5 @@
-﻿@inherits NancyRazorViewBase<dynamic>
+﻿@using Nancy.ViewEngines.Razor
+@inherits NancyRazorViewBase<dynamic>
 
 @{
     Layout = "_Layout.cshtml";
@@ -13,6 +14,6 @@
 	<i> @Model.Dinner.Title ? </i> </p>
 </div>
 	
-<form action="/dinners/delete/@Model.Dinner.DinnerID" method="post" >
+<form action="/dinners/delete/@Model.Dinner.Id" method="post" >
 	<input name="confirmButton" type="submit" value="Delete" />        
 </form>

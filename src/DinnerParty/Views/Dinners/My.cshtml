@@ -1,5 +1,6 @@
 ﻿@using System.Collections.Generic
 @using System.Linq
+@using Nancy.ViewEngines.Razor
 @using DinnerParty.Models
 @inherits NancyRazorViewBase<dynamic>
 
@@ -14,7 +15,7 @@
 	@foreach (var dinner in Model.Dinners)
  { 
 		<li>     
-            <a href="/dinners/@dinner.DinnerID">@dinner.Title</a>
+            <a href="/@dinner.DinnerID">@dinner.Title</a>
 			on 
 			<strong>@dinner.EventDate.ToString("yyyy-MMM-dd")
 			@dinner.EventDate.ToString("HH:mm tt")</strong>
