@@ -1,4 +1,5 @@
-﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+﻿@using Cassette.Nancy
+@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
 @{
     Bundles.Reference("assets/stylesheets/main.css");
 }
@@ -76,10 +77,10 @@
                    }
                    <li class="last"><a href="/About">About</a></li>
                </ul>
-               <a class="feed" href="@Url.Content("~/Services/OData.svc")">
-                   <img alt="OData Feed" title="OData Feed" src="@Url.Content("~/images/icon-odatafeed-28x28.png")" /></a>
-               <!--<a class="feed" href="@Url.Content("~/Services/RSS")">
-                   <img alt="RSS Feed" title="RSS Feed" src="@Url.Content("~/images/icon-feed-28x28.png")" /></a>-->
+               <!--<a class="feed" href="@Url.Content("~/Services/OData.svc")">
+                   <img alt="OData Feed" title="OData Feed" src="@Url.Content("~/images/icon-odatafeed-28x28.png")" /></a>-->
+               <a class="feed" href="@Url.Content("~/Services/RSS")">
+                   <img alt="RSS Feed" title="RSS Feed" src="@Url.Content("~/images/icon-feed-28x28.png")" /></a>
                <a class="feed" href="webcal://Services/iCalFeed">
                    <img alt="iCal Calendar Feed for Nerd Dinners" title="iCal Calendar Feed for Nerd Dinners" src="@Url.Content("~/images/icon-icalfeed-28x28.png")" /></a>
            </nav>
