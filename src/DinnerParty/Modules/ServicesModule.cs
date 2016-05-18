@@ -16,11 +16,11 @@ namespace DinnerParty.Modules
 
                     if (dinners == null)
                     {
-                        base.Page.Title = "Nerd Dinner Not Found";
-                        return View["NotFound", base.Model];
+                        Page.Title = "Nerd Dinner Not Found";
+                        return View["NotFound", Model];
                     }
 
-                    return this.Response.AsRSS(dinners, "Upcoming Nerd Dinners");
+                    return Response.AsRSS(dinners, "Upcoming Nerd Dinners");
                 };
         }
     }

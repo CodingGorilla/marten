@@ -28,18 +28,18 @@ namespace DinnerParty.Modules
             this.RSSTitle = RSSTitle; ;
             this.URL = URL;
 
-            this.Contents = GetXmlContents(model);
-            this.ContentType = "application/rss+xml";
-            this.StatusCode = HttpStatusCode.OK;
+            Contents = GetXmlContents(model);
+            ContentType = "application/rss+xml";
+            StatusCode = HttpStatusCode.OK;
         }
 
         private Action<Stream> GetXmlContents(IEnumerable<Dinner> model)
         {
             var items = new List<SyndicationItem>();
 
-            foreach (Dinner d in model)
+            foreach (var d in model)
             {
-                string contentString = String.Format("{0} with {1} on {2:MMM dd, yyyy} at {3}. Where: {4}, {5}",
+                var contentString = String.Format("{0} with {1} on {2:MMM dd, yyyy} at {3}. Where: {4}, {5}",
                             d.Description, d.HostedBy, d.EventDate, d.EventDate.ToShortTimeString(), d.Address, d.Country);
 
                 var item = new SyndicationItem(
@@ -54,17 +54,17 @@ namespace DinnerParty.Modules
                 items.Add(item);
             }
 
-            SyndicationFeed feed = new SyndicationFeed(
-                this.RSSTitle,
-                this.RSSTitle, /* Using Title also as Description */
-                this.URL,
+            var feed = new SyndicationFeed(
+                RSSTitle,
+                RSSTitle, /* Using Title also as Description */
+                URL,
                 items);
 
-            Rss20FeedFormatter formatter = new Rss20FeedFormatter(feed);
+            var formatter = new Rss20FeedFormatter(feed);
 
             return stream =>
             {
-                using (XmlWriter writer = XmlWriter.Create(stream))
+                using (var writer = XmlWriter.Create(stream))
                 {
                     formatter.WriteTo(writer);
 

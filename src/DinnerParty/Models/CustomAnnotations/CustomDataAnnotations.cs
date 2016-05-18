@@ -22,7 +22,7 @@ namespace DinnerParty.Models.CustomAnnotations
 
         public override string FormatErrorMessage(string name)
         {
-            return this.ErrorMessage;
+            return ErrorMessage;
         }
 
         public override Boolean IsValid(Object value)
@@ -30,19 +30,19 @@ namespace DinnerParty.Models.CustomAnnotations
             if (value == null)
                 return false;
 
-            Type objectType = value.GetType();
+            var objectType = value.GetType();
 
-            PropertyInfo[] properties = objectType.GetProperties();
+            var properties = objectType.GetProperties();
 
-            object sourceValue = new object();
-            object matchValue = new object();
+            var sourceValue = new object();
+            var matchValue = new object();
 
             Type sourceType = null;
             Type matchType = null;
 
-            int counter = 0;
+            var counter = 0;
 
-            foreach (PropertyInfo propertyInfo in properties)
+            foreach (var propertyInfo in properties)
             {
                 if (propertyInfo.Name == SourceProperty || propertyInfo.Name == MatchProperty)
                 {

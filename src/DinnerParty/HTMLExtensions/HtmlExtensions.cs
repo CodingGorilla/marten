@@ -10,8 +10,8 @@ namespace DinnerParty.HtmlExtensions
     {
         public static Nancy.ViewEngines.Razor.IHtmlString CheckBox<T>(this HtmlHelpers<T> helper, string Name, dynamic ModelProperty)
         {
-            string input = String.Empty;
-            bool checkedState = false;
+            var input = String.Empty;
+            var checkedState = false;
 
             if (!bool.TryParse(ModelProperty.ToString(), out checkedState))
             {
@@ -26,16 +26,16 @@ namespace DinnerParty.HtmlExtensions
             }
 
 
-            return new Nancy.ViewEngines.Razor.NonEncodedHtmlString(input);
+            return new NonEncodedHtmlString(input);
         }
 
-        public static Nancy.ViewEngines.Razor.IHtmlString ValidationSummary<T>(this HtmlHelpers<T> helper, List<DinnerParty.Models.ErrorModel> Errors)
+        public static Nancy.ViewEngines.Razor.IHtmlString ValidationSummary<T>(this HtmlHelpers<T> helper, List<Models.ErrorModel> Errors)
         {
 
             if (!Errors.Any())
                 return new NonEncodedHtmlString("");
 
-            string div = "<div class=\"validation-summary-errors\"><span>Account creation was unsuccessful. Please correct the errors and try again.</span><ul>";
+            var div = "<div class=\"validation-summary-errors\"><span>Account creation was unsuccessful. Please correct the errors and try again.</span><ul>";
 
             foreach (var item in Errors)
             {
@@ -49,12 +49,12 @@ namespace DinnerParty.HtmlExtensions
             return new NonEncodedHtmlString(div);
         }
 
-        public static Nancy.ViewEngines.Razor.IHtmlString ValidationMessageFor<T>(this HtmlHelpers<T> helper, List<DinnerParty.Models.ErrorModel> Errors, string PropertyName)
+        public static Nancy.ViewEngines.Razor.IHtmlString ValidationMessageFor<T>(this HtmlHelpers<T> helper, List<Models.ErrorModel> Errors, string PropertyName)
         {
             if (!Errors.Any())
                 return new NonEncodedHtmlString("");
 
-            string span = String.Empty;
+            var span = String.Empty;
 
             foreach (var item in Errors)
             {

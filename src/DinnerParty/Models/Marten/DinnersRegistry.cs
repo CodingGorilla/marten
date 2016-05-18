@@ -3,6 +3,7 @@ using Marten;
 
 namespace DinnerParty.Models.Marten
 {
+
     public class DinnersRegistry : MartenRegistry
     {
         public DinnersRegistry()

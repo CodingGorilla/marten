@@ -20,8 +20,8 @@ namespace DinnerParty.Modules
                 {
 
                     // Default the limit to 40, if not supplied.
-                    if (!this.Request.Form.limit.HasValue || String.IsNullOrWhiteSpace(this.Request.Form.limit))
-                        this.Request.Form.limit = 40;
+                    if (!Request.Form.limit.HasValue || String.IsNullOrWhiteSpace(Request.Form.limit))
+                        Request.Form.limit = 40;
 
                     //var jsonDinners = documentSession.Query<Dinner>()
                     //    .Where(x => x.EventDate >= DateTime.Now.Date)
@@ -33,7 +33,7 @@ namespace DinnerParty.Modules
                     // TODO: Not sure this will work
                     var jsonDinners = documentSession.Query<Dinner>()
                                                      .Where(x => x.EventDate >= DateTime.Now.Date)
-                                                     .Take((int)this.Request.Form.limit)
+                                                     .Take((int)Request.Form.limit)
                                                      .OrderByDescending(x => x.RSVPs.Count)
                                                      .Select(x => new JsonDinner
                                                                   {
@@ -54,8 +54,8 @@ namespace DinnerParty.Modules
             Post["/SearchByLocation"] = parameters =>
             {
 
-                double latitude = (double)this.Request.Form.latitude;
-                double longitude = (double)this.Request.Form.longitude;
+                var latitude = (double)Request.Form.latitude;
+                var longitude = (double)Request.Form.longitude;
 
                 var dinners = documentSession.Query<Dinner>()
                                 .Where(x => x.EventDate > DateTime.Now.Date)
@@ -111,22 +111,22 @@ namespace DinnerParty.Modules
         /// <returns></returns>
         private double DistanceBetween(double Lat1, double Long1, double Lat2, double Long2)
         {
-            double dLat1InRad = Lat1 * (Math.PI / 180.0);
-            double dLong1InRad = Long1 * (Math.PI / 180.0);
-            double dLat2InRad = Lat2 * (Math.PI / 180.0);
-            double dLong2InRad = Long2 * (Math.PI / 180.0);
+            var dLat1InRad = Lat1 * (Math.PI / 180.0);
+            var dLong1InRad = Long1 * (Math.PI / 180.0);
+            var dLat2InRad = Lat2 * (Math.PI / 180.0);
+            var dLong2InRad = Long2 * (Math.PI / 180.0);
 
-            double dLongitude = dLong2InRad - dLong1InRad;
-            double dLatitude = dLat2InRad - dLat1InRad;
+            var dLongitude = dLong2InRad - dLong1InRad;
+            var dLatitude = dLat2InRad - dLat1InRad;
             ///* Intermediate result a. */
-            double a = Math.Pow(Math.Sin(dLatitude / 2.0), 2) + Math.Cos(dLat1InRad)
+            var a = Math.Pow(Math.Sin(dLatitude / 2.0), 2) + Math.Cos(dLat1InRad)
                              * Math.Cos(dLat2InRad)
                              * Math.Pow(Math.Sin(dLongitude / 2.0), 2);
             ///* Intermediate result c (great circle distance in Radians). */
-            double c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
-            double kEarthRadius = 6376.5;        /* kms */
+            var c = 2.0 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1.0 - a));
+            var kEarthRadius = 6376.5;        /* kms */
 
-            double dDistance = kEarthRadius * c;
+            var dDistance = kEarthRadius * c;
             return dDistance;
         }
 

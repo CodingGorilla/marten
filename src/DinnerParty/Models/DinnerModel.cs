@@ -70,14 +70,14 @@ namespace DinnerParty.Models
         {
             get
             {
-                return new LocationDetail() { Latitude = this.Latitude, Longitude = this.Longitude, Title = this.Title, Address = this.Address };
+                return new LocationDetail() { Latitude = Latitude, Longitude = Longitude, Title = Title, Address = Address };
             }
             set
             {
-                this.Latitude = value.Latitude;
-                this.Longitude = value.Longitude;
-                this.Title = value.Title;
-                this.Address = value.Address;
+                Latitude = value.Latitude;
+                Longitude = value.Longitude;
+                Title = value.Title;
+                Address = value.Address;
             }
         }
 

@@ -8,17 +8,17 @@ namespace DinnerParty.Modules
         {
             Get["/"] = parameters =>
             {
-                base.Page.Title = "Home";
+                Page.Title = "Home";
 
-                return View["Index", base.Model];
+                return View["Index", Model];
             };
 
             Get["/about"] = parameters =>
             {
                
-                base.Page.Title = "About";
+                Page.Title = "About";
 
-                return View["About", base.Model];
+                return View["About", Model];
             };
         }
     }

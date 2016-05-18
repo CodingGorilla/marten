@@ -16,7 +16,7 @@ namespace DinnerParty
 
         public UserMapper(IDocumentSession documentSession)
         {
-            this._documentSession = documentSession;
+            _documentSession = documentSession;
 
         }
 
@@ -65,7 +65,7 @@ namespace DinnerParty
 
             //Instantiate MD5CryptoServiceProvider, get bytes for original password and compute hash (encoded password)
             MD5 md5 = new MD5CryptoServiceProvider();
-            var originalBytes = ASCIIEncoding.Default.GetBytes(originalPassword);
+            var originalBytes = Encoding.Default.GetBytes(originalPassword);
             var encodedBytes = md5.ComputeHash(originalBytes);
 
             //Convert encoded bytes back to a 'readable' string

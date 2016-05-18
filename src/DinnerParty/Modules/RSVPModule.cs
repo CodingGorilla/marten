@@ -18,10 +18,10 @@ namespace DinnerParty.Modules
 
             Post["/Cancel/{id}"] = parameters =>
             {
-                Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
-                RSVP rsvp = dinner.RSVPs
-                    .SingleOrDefault(r => this.Context.CurrentUser.UserName == (r.AttendeeNameId ?? r.AttendeeName));
+                var rsvp = dinner.RSVPs
+                    .SingleOrDefault(r => Context.CurrentUser.UserName == (r.AttendeeNameId ?? r.AttendeeName));
 
                 if (rsvp != null)
                 {
@@ -35,14 +35,14 @@ namespace DinnerParty.Modules
 
             Post["/Register/{id}"] = parameters =>
             {
-                Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
-                if (!dinner.IsUserRegistered(this.Context.CurrentUser.UserName))
+                if (!dinner.IsUserRegistered(Context.CurrentUser.UserName))
                 {
 
-                    RSVP rsvp = new RSVP();
-                    rsvp.AttendeeNameId = this.Context.CurrentUser.UserName;
-                    rsvp.AttendeeName = ((UserIdentity)this.Context.CurrentUser).FriendlyName;
+                    var rsvp = new RSVP();
+                    rsvp.AttendeeNameId = Context.CurrentUser.UserName;
+                    rsvp.AttendeeName = ((UserIdentity)Context.CurrentUser).FriendlyName;
 
                     dinner.RSVPs.Add(rsvp);
 

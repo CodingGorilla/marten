@@ -19,12 +19,12 @@ namespace DinnerParty.Modules
         {
             Get["/logon"] = parameters =>
             {
-                base.Page.Title = "Login";
+                Page.Title = "Login";
 
                 var loginModel = new LoginModel();
-                base.Model.LoginModel = loginModel;
+                Model.LoginModel = loginModel;
 
-                return View["LogOn", base.Model];
+                return View["LogOn", Model];
             };
 
             Post["/logon"] = parameters =>
@@ -37,23 +37,23 @@ namespace DinnerParty.Modules
 
                     if (userGuid == null || !result.IsValid)
                     {
-                        base.Page.Title = "Login";
+                        Page.Title = "Login";
 
                         foreach (var item in result.FormattedErrors)
                         {
                             foreach (var member in item.MemberNames)
                             {
-                                base.Page.Errors.Add(new ErrorModel() { Name = member, ErrorMessage = item.GetMessage(member) });
+                                Page.Errors.Add(new ErrorModel() { Name = member, ErrorMessage = item.GetMessage(member) });
                             }
                         }
 
-                        if (userGuid == null && base.Page.Errors.Count == 0)
-                            base.Page.Errors.Add(new ErrorModel() { Name = "UserName", ErrorMessage = "Unable to find user" });
+                        if (userGuid == null && Page.Errors.Count == 0)
+                            Page.Errors.Add(new ErrorModel() { Name = "UserName", ErrorMessage = "Unable to find user" });
 
 
-                        base.Model.LoginModel = model;
+                        Model.LoginModel = model;
 
-                        return View["LogOn", base.Model];
+                        return View["LogOn", Model];
                     }
 
                     DateTime? expiry = null;
@@ -72,13 +72,13 @@ namespace DinnerParty.Modules
 
             Get["/register"] = parameters =>
             {
-                base.Page.Title = "Register";
+                Page.Title = "Register";
 
                 var registerModel = new RegisterModel();
-                base.Model.RegisterModel = registerModel;
+                Model.RegisterModel = registerModel;
 
 
-                return View["Register", base.Model];
+                return View["Register", Model];
             };
 
             Post["/register"] = parameters =>
@@ -88,19 +88,19 @@ namespace DinnerParty.Modules
 
                     if (!result.IsValid)
                     {
-                        base.Page.Title = "Register";
+                        Page.Title = "Register";
 
-                        base.Model.RegisterModel = model;
+                        Model.RegisterModel = model;
 
                         foreach (var item in result.FormattedErrors)
                         {
                             foreach (var member in item.MemberNames)
                             {
-                                base.Page.Errors.Add(new ErrorModel() { Name = member, ErrorMessage = item.GetMessage(member) });
+                                Page.Errors.Add(new ErrorModel() { Name = member, ErrorMessage = item.GetMessage(member) });
                             }
                         }
 
-                        return View["Register", base.Model];
+                        return View["Register", Model];
                     }
 
                     var userMapper = new UserMapper(documentSession);
@@ -109,10 +109,10 @@ namespace DinnerParty.Modules
                     //User already exists
                     if (userGUID == null)
                     {
-                        base.Page.Title = "Register";
-                        base.Model.RegisterModel = model;
-                        base.Page.Errors.Add(new ErrorModel() { Name = "EmailAddress", ErrorMessage = "This email address has already been registered" });
-                        return View["Register", base.Model];
+                        Page.Title = "Register";
+                        Model.RegisterModel = model;
+                        Page.Errors.Add(new ErrorModel() { Name = "EmailAddress", ErrorMessage = "This email address has already been registered" });
+                        return View["Register", Model];
                     }
 
                     DateTime? expiry = DateTime.Now.AddDays(7);
@@ -124,38 +124,38 @@ namespace DinnerParty.Modules
 
             Post["/token"] = parameters =>
             {
-                string Apikey = ConfigurationManager.AppSettings["JanrainKey"];
+                var Apikey = ConfigurationManager.AppSettings["JanrainKey"];
 
                 if (string.IsNullOrWhiteSpace(Request.Form.token))
                 {
-                    base.Page.Title = "Login Error";
-                    base.Model.LoginModel = "Bad response from login provider - could not find login token.";
+                    Page.Title = "Login Error";
+                    Model.LoginModel = "Bad response from login provider - could not find login token.";
 
-                    return View["Error", base.Model];
+                    return View["Error", Model];
                 }
 
                 var response = new WebClient().DownloadString(string.Format("https://rpxnow.com/api/v2/auth_info?apiKey={0}&token={1}", Apikey, Request.Form.token));
 
                 if (string.IsNullOrWhiteSpace(response))
                 {
-                    base.Page.Title = "Login Error";
-                    base.Model.LoginModel = "Bad response from login provider - could not find user.";
-                    return View["Error", base.Model];
+                    Page.Title = "Login Error";
+                    Model.LoginModel = "Bad response from login provider - could not find user.";
+                    return View["Error", Model];
                 }
 
                 var j = JsonConvert.DeserializeObject<dynamic>(response);
 
                 if (j.stat.ToString() != "ok")
                 {
-                    base.Page.Title = "Login Error";
-                    base.Model.LoginModel = "Bad response from login provider - could not find login token.";
-                    return View["Error", base.Model];
+                    Page.Title = "Login Error";
+                    Model.LoginModel = "Bad response from login provider - could not find login token.";
+                    return View["Error", Model];
                 }
 
                 string userIdentity = j.profile.identifier.ToString();
                 string displayName = j.profile.displayName.ToString();
                 string username = j.profile.preferredUsername.ToString();
-                string email = string.Empty;
+                var email = string.Empty;
                 if (j.profile.email != null)
                     email = j.profile.email.ToString();
 
@@ -163,7 +163,7 @@ namespace DinnerParty.Modules
                               
                 if (user == null)
                 {
-                    UserModel newUser = new UserModel()
+                    var newUser = new UserModel()
                     {
                         Id = Guid.NewGuid(),
                         EMailAddress = (!string.IsNullOrEmpty(email)) ? email : "none@void.com",

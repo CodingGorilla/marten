@@ -26,7 +26,7 @@ namespace DinnerParty
 
             foreach (PropertyDescriptor item in TypeDescriptor.GetProperties(boundModel))
             {
-                object value = item.GetValue(boundModel);
+                var value = item.GetValue(boundModel);
                 if (value != null)
                     item.SetValue(instance, value);
             }

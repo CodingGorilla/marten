@@ -20,7 +20,7 @@ namespace DinnerParty.Modules
 
         public DinnerModule(IDocumentSession documentSession)
         {
-            this._documentSession = documentSession;
+            _documentSession = documentSession;
             const string basePath = "/dinners";
 
             Get[basePath] = Dinners;
@@ -33,29 +33,29 @@ namespace DinnerParty.Modules
                     return 404;
                 }
 
-                Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
                 if (dinner == null)
                 {
                     return 404;
                 }
 
-                base.Page.Title = dinner.Title;
-                base.Model.Dinner = dinner;
+                Page.Title = dinner.Title;
+                Model.Dinner = dinner;
 
-                return View["Dinners/Details", base.Model];
+                return View["Dinners/Details", Model];
             };
         }
 
         private Negotiator Dinners(dynamic parameters)
         {
-            base.Page.Title = "Upcoming Nerd Dinners";
+            Page.Title = "Upcoming Nerd Dinners";
             IQueryable<Dinner> dinners = null;
 
             //Searching?
-            if (this.Request.Query.q.HasValue)
+            if (Request.Query.q.HasValue)
             {
-                string query = this.Request.Query.q;
+                string query = Request.Query.q;
 
                 dinners = _documentSession.Query<Dinner>().Where(d => d.Title.Contains(query)
                         || d.Description.Contains(query)
@@ -68,9 +68,9 @@ namespace DinnerParty.Modules
 
             int pageIndex = parameters.pagenumber.HasValue && !String.IsNullOrWhiteSpace(parameters.pagenumber) ? parameters.pagenumber : 1;
 
-            base.Model.Dinners = dinners.ToPagedList(pageIndex, PAGE_SIZE);
+            Model.Dinners = dinners.ToPagedList(pageIndex, PAGE_SIZE);
 
-            return View["Dinners/Index", base.Model];
+            return View["Dinners/Index", Model];
         }
     }
 
@@ -83,16 +83,16 @@ namespace DinnerParty.Modules
 
             Get["/create"] = parameters =>
             {
-                Dinner dinner = new Dinner()
+                var dinner = new Dinner()
                 {
                     EventDate = DateTime.Now.AddDays(7)
                 };
 
-                base.Page.Title = "Host a Nerd Dinner";
+                Page.Title = "Host a Nerd Dinner";
 
-                base.Model.Dinner = dinner;
+                Model.Dinner = dinner;
 
-                return View["Create", base.Model];
+                return View["Create", Model];
             };
 
             Post["/create"] = parameters =>
@@ -102,11 +102,11 @@ namespace DinnerParty.Modules
 
                     if (result.IsValid)
                     {
-                        UserIdentity nerd = (UserIdentity)this.Context.CurrentUser;
+                        var nerd = (UserIdentity)Context.CurrentUser;
                         dinner.HostedById = nerd.UserName;
                         dinner.HostedBy = nerd.FriendlyName;
 
-                        RSVP rsvp = new RSVP
+                        var rsvp = new RSVP
                                     {
                                         AttendeeNameId = nerd.UserName,
                                         AttendeeName = nerd.FriendlyName
@@ -117,98 +117,98 @@ namespace DinnerParty.Modules
                         documentSession.Store(dinner);
                         documentSession.SaveChanges();
 
-                        return this.Response.AsRedirect("/" + dinner.DinnerID);
+                        return Response.AsRedirect("/" + dinner.DinnerID);
                     }
 
-                    base.Page.Title = "Host a Nerd Dinner";
-                    base.Model.Dinner = dinner;
+                    Page.Title = "Host a Nerd Dinner";
+                    Model.Dinner = dinner;
                     foreach (var item in result.Errors)
                     {
                         foreach (var error in item.Value)
                         {
-                            base.Page.Errors.Add(new ErrorModel() { Name = item.Key, ErrorMessage = error.ErrorMessage });
+                            Page.Errors.Add(new ErrorModel() { Name = item.Key, ErrorMessage = error.ErrorMessage });
                         }
                     }
 
-                    return View["Create", base.Model];
+                    return View["Create", Model];
                 };
 
             Get["/delete/" + Route.AnyIntAtLeastOnce("id")] = parameters =>
                 {
-                    Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                    var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
                     if (dinner == null)
                     {
-                        base.Page.Title = "Nerd Dinner Not Found";
-                        return View["NotFound", base.Model];
+                        Page.Title = "Nerd Dinner Not Found";
+                        return View["NotFound", Model];
                     }
 
-                    if (!dinner.IsHostedBy(this.Context.CurrentUser.UserName))
+                    if (!dinner.IsHostedBy(Context.CurrentUser.UserName))
                     {
-                        base.Page.Title = "You Don't Own This Dinner";
-                        return View["InvalidOwner", base.Model];
+                        Page.Title = "You Don't Own This Dinner";
+                        return View["InvalidOwner", Model];
                     }
 
-                    base.Page.Title = "Delete Confirmation: " + dinner.Title;
+                    Page.Title = "Delete Confirmation: " + dinner.Title;
 
-                    base.Model.Dinner = dinner;
+                    Model.Dinner = dinner;
 
-                    return View["Delete", base.Model];
+                    return View["Delete", Model];
                 };
 
             Post["/delete/" + Route.AnyIntAtLeastOnce("id")] = parameters =>
                 {
-                    Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                    var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
                     if (dinner == null)
                     {
-                        base.Page.Title = "Nerd Dinner Not Found";
-                        return View["NotFound", base.Model];
+                        Page.Title = "Nerd Dinner Not Found";
+                        return View["NotFound", Model];
                     }
 
-                    if (!dinner.IsHostedBy(this.Context.CurrentUser.UserName))
+                    if (!dinner.IsHostedBy(Context.CurrentUser.UserName))
                     {
-                        base.Page.Title = "You Don't Own This Dinner";
-                        return View["InvalidOwner", base.Model];
+                        Page.Title = "You Don't Own This Dinner";
+                        return View["InvalidOwner", Model];
                     }
 
                     documentSession.Delete(dinner);
                     documentSession.SaveChanges();
 
-                    base.Page.Title = "Deleted";
-                    return View["Deleted", base.Model];
+                    Page.Title = "Deleted";
+                    return View["Deleted", Model];
                 };
 
             Get["/edit" + Route.And() + Route.AnyIntAtLeastOnce("id")] = parameters =>
                 {
-                    Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                    var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
                     if (dinner == null)
                     {
-                        base.Page.Title = "Nerd Dinner Not Found";
-                        return View["NotFound", base.Model];
+                        Page.Title = "Nerd Dinner Not Found";
+                        return View["NotFound", Model];
                     }
 
-                    if (!dinner.IsHostedBy(this.Context.CurrentUser.UserName))
+                    if (!dinner.IsHostedBy(Context.CurrentUser.UserName))
                     {
-                        base.Page.Title = "You Don't Own This Dinner";
-                        return View["InvalidOwner", base.Model];
+                        Page.Title = "You Don't Own This Dinner";
+                        return View["InvalidOwner", Model];
                     }
 
-                    base.Page.Title = "Edit: " + dinner.Title;
-                    base.Model.Dinner = dinner;
+                    Page.Title = "Edit: " + dinner.Title;
+                    Model.Dinner = dinner;
 
-                    return View["Edit", base.Model];
+                    return View["Edit", Model];
                 };
 
             Post["/edit" + Route.And() + Route.AnyIntAtLeastOnce("id")] = parameters =>
                 {
-                    Dinner dinner = documentSession.Load<Dinner>((int)parameters.id);
+                    var dinner = documentSession.Load<Dinner>((int)parameters.id);
 
-                    if (!dinner.IsHostedBy(this.Context.CurrentUser.UserName))
+                    if (!dinner.IsHostedBy(Context.CurrentUser.UserName))
                     {
-                        base.Page.Title = "You Don't Own This Dinner";
-                        return View["InvalidOwner", base.Model];
+                        Page.Title = "You Don't Own This Dinner";
+                        return View["InvalidOwner", Model];
                     }
 
                     this.BindTo(dinner);
@@ -217,28 +217,28 @@ namespace DinnerParty.Modules
 
                     if (!result.IsValid)
                     {
-                        base.Page.Title = "Edit: " + dinner.Title;
-                        base.Model.Dinner = dinner;
+                        Page.Title = "Edit: " + dinner.Title;
+                        Model.Dinner = dinner;
                         foreach (var item in result.Errors)
                         {
                             foreach (var error in item.Value)
                             {
-                                base.Page.Errors.Add(new ErrorModel() { Name = item.Key, ErrorMessage = error.ErrorMessage });
+                                Page.Errors.Add(new ErrorModel() { Name = item.Key, ErrorMessage = error.ErrorMessage });
                             }
                         }
 
-                        return View["Edit", base.Model];
+                        return View["Edit", Model];
                     }
 
                     documentSession.SaveChanges();
 
-                    return this.Response.AsRedirect("/" + dinner.DinnerID);
+                    return Response.AsRedirect("/" + dinner.DinnerID);
 
                 };
 
             Get["/my"] = parameters =>
                 {
-                    string nerdName = this.Context.CurrentUser.UserName;
+                    var nerdName = Context.CurrentUser.UserName;
 
                     var userDinners = documentSession.Query<Dinner>()
                                                      .Where(x => x.HostedById == nerdName || x.HostedBy == nerdName ||
@@ -250,10 +250,10 @@ namespace DinnerParty.Modules
                                                      .OrderBy(x => x.EventDate)
                                                      .AsEnumerable();
 
-                    base.Page.Title = "My Dinners";
-                    base.Model.Dinners = userDinners;
+                    Page.Title = "My Dinners";
+                    Model.Dinners = userDinners;
 
-                    return View["My", base.Model];
+                    return View["My", Model];
                 };
         }
     }

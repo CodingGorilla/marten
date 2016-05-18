@@ -1,4 +1,4 @@
-﻿@inherits Nancy.ViewEngines.Razor.NancyRazorViewBase<dynamic>
+﻿@inherits NancyRazorViewBase<dynamic>
 @using PagedList;
 
 @{
@@ -10,7 +10,7 @@
 	<a rel='feedurl' href='/Dinners/WebSliceUpcoming' style='display:none;' ></a>
 	<ul class="upcomingdinners">
 	
-		@foreach (var dinner in (PagedList.PagedList<DinnerParty.Models.Dinner>)Model.Dinners) {        
+		@foreach (var dinner in (PagedList<DinnerParty.Models.Dinner>)Model.Dinners) {        
 			<li>     
                 <a href="@dinner.DinnerID">@dinner.Title</a>
 				on 
