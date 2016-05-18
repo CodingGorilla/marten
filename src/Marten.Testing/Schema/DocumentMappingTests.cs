@@ -5,7 +5,8 @@ using System.Linq;
 using System.Reflection;
 using Baseline;
 using Marten.Schema;
-using Marten.Schema.Sequences;
+using Marten.Schema.Identity;
+using Marten.Schema.Identity.Sequences;
 using Marten.Testing.Documents;
 using Shouldly;
 using StructureMap;
@@ -486,14 +487,11 @@ namespace Marten.Testing.Schema
 
         public class CustomIdGeneration : IIdGeneration
         {
-            public IEnumerable<StorageArgument> ToArguments()
-            {
-                yield break;
-            }
+            public IEnumerable<Type> KeyTypes { get; }
 
-            public string AssignmentBodyCode(MemberInfo idMember)
+            public IIdGenerator<T> Build<T>(IDocumentSchema schema)
             {
-                return null;
+                throw new NotImplementedException();
             }
         }
     }

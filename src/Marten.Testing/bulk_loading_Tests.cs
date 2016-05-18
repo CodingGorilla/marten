@@ -28,8 +28,6 @@ namespace Marten.Testing
 
             theSession.Load<Target>(data[0].Id).ShouldNotBeNull();
 
-
-            Debug.WriteLine(DocumentStorageBuilder.GenerateDocumentStorageCode(new[] {DocumentMapping.For<Target>() }));
         }
 
         [Fact]
@@ -81,5 +79,8 @@ namespace Marten.Testing
             theSession.Load<Target>(data[0].Id).ShouldNotBeNull();
         }
 
+
+
+        
     }
 }

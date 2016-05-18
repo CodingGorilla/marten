@@ -9,6 +9,7 @@ using Marten.Events;
 using Marten.Linq;
 using Marten.Linq.QueryHandlers;
 using Marten.Schema;
+using Marten.Schema.Identity;
 using Marten.Services;
 using Marten.Services.Includes;
 using Remotion.Linq.Parsing.Structure;
@@ -90,7 +91,7 @@ namespace Marten
             else
             {
                 var storage = _schema.StorageFor(typeof(T));
-                var idAssignment = storage.As<IdAssignment<T>>();
+                var idAssignment = _schema.IdAssignmentFor<T>();
 
                 foreach (var entity in entities)
                 {

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Marten.Events;
 using Marten.Linq;
 using Marten.Linq.QueryHandlers;
-using Marten.Schema.Sequences;
+using Marten.Schema.BulkLoading;
+using Marten.Schema.Identity;
+using Marten.Schema.Identity.Sequences;
 
 namespace Marten.Schema
 {
@@ -80,7 +82,11 @@ namespace Marten.Schema
 
         IResolver<T> ResolverFor<T>();
 
-        /// <summary>
+
+        IdAssignment<T> IdAssignmentFor<T>();
+
+
+            /// <summary>
         /// Used to create IQueryHandler's for Linq queries
         /// </summary>
         IQueryHandlerFactory HandlerFactory { get; }
@@ -96,5 +102,7 @@ namespace Marten.Schema
         /// Query against the actual Postgresql database schema objects
         /// </summary>
         IDbObjects DbObjects { get; }
+
+        IBulkLoader<T> BulkLoaderFor<T>();
     }
 }

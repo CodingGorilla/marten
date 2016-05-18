@@ -54,14 +54,12 @@ namespace Marten.Testing
         {
             var options = new StoreOptions();
             options.Connection(ConnectionSource.ConnectionString);
+            options.Serializer<JilSerializer>();
 
-            lock (_locker)
-            {
-                //options.DatabaseSchemaName = "Test_" + SchemaCount++;
-            }
-            
 
             configure(options);
+
+            
 
             var store = new TestingDocumentStore(options);
             store.Advanced.Clean.CompletelyRemoveAll();
@@ -74,8 +72,6 @@ namespace Marten.Testing
         {
             return For(_ =>
             {
-                // TODO -- We can't do this until GH-271 is fixed
-                _.LoadPrecompiledStorage(StorageTypesCache.PrebuiltStorage());
             });
         }
 
@@ -84,7 +80,6 @@ namespace Marten.Testing
             var store = For(_ =>
             {
                 _.DatabaseSchemaName = StoreOptions.DefaultDatabaseSchemaName;
-                _.LoadPrecompiledStorage(StorageTypesCache.PrebuiltStorage());
             });
             return store;
         }

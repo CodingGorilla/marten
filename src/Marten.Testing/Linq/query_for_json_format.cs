@@ -42,6 +42,12 @@ namespace Marten.Testing.Linq
 
     public class query_for_json_format : DocumentSessionFixture<NulloIdentityMap>
     {
+        public query_for_json_format()
+        {
+            // These tests are hard-coded for the Json that Newtonsoft puts out
+            StoreOptions(_ => _.Serializer(new JsonNetSerializer()));
+        }
+
         [Fact]
         public void to_list()
         {

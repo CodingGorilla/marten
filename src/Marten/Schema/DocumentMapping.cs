@@ -11,7 +11,8 @@ using Baseline.Reflection;
 using Marten.Generation;
 using Marten.Linq;
 using Marten.Schema.Hierarchies;
-using Marten.Schema.Sequences;
+using Marten.Schema.Identity;
+using Marten.Schema.Identity.Sequences;
 using Marten.Services;
 using Marten.Services.Includes;
 using Marten.Util;
@@ -33,6 +34,7 @@ namespace Marten.Schema
         public const string UpsertPrefix = "mt_upsert_";
         public const string DocumentTypeColumn = "mt_doc_type";
         public const string MartenPrefix = "mt_";
+        public const string LastModifiedColumn = "mt_last_modified";
 
         private readonly StoreOptions _storeOptions;
         private readonly ConcurrentDictionary<string, IField> _fields = new ConcurrentDictionary<string, IField>();
@@ -252,18 +254,6 @@ namespace Marten.Schema
             }
         }
 
-        public virtual IEnumerable<StorageArgument> ToArguments()
-        {
-            foreach (var argument in IdStrategy.ToArguments())
-            {
-                yield return argument;
-            }
-
-            if (IsHierarchy())
-            {
-                yield return new HierarchyArgument(this);
-            }
-        }
 
         public IWhereFragment DefaultWhereFragment()
         {
@@ -277,7 +267,12 @@ namespace Marten.Schema
 
         public IDocumentStorage BuildStorage(IDocumentSchema schema)
         {
-            return DocumentStorageBuilder.Build(schema, this);
+            var resolverType = IsHierarchy() ? typeof(HierarchicalResolver<>) : typeof(Resolver<>);
+
+            var closedType = resolverType.MakeGenericType(DocumentType);
+
+            return Activator.CreateInstance(closedType, schema.StoreOptions.Serializer(), this)
+                .As<IDocumentStorage>();
         }
 
         public void WriteSchemaObjects(IDocumentSchema schema, StringWriter writer)
@@ -399,7 +394,7 @@ namespace Marten.Schema
 
         public IField FieldFor(MemberInfo member)
         {
-            return _fields.GetOrAdd(member.Name, name => new JsonLocatorField(member));
+            return _fields.GetOrAdd(member.Name, name => new JsonLocatorField(_storeOptions.Serializer().EnumStorage, member));
         }
 
         public IField FieldFor(string memberName)
@@ -411,7 +406,7 @@ namespace Marten.Schema
 
                 if (member == null) return null;
 
-                return new JsonLocatorField(member);
+                return new JsonLocatorField(_storeOptions.Serializer().EnumStorage, member);
             });
         }
 
@@ -426,6 +421,8 @@ namespace Marten.Schema
             var pgIdType = TypeMappings.GetPgType(IdMember.GetMemberType());
             var table = new TableDefinition(Table, new TableColumn("id", pgIdType));
             table.Columns.Add(new TableColumn("data", "jsonb") { Directive = "NOT NULL" });
+
+            table.Columns.Add(new TableColumn(LastModifiedColumn, "timestamp with time zone") {Directive = "DEFAULT transaction_timestamp()" });
 
             _fields.Values.OfType<DuplicatedField>().Select(x => x.ToColumn(schema)).Each(x => table.Columns.Add(x));
 
@@ -451,8 +448,6 @@ namespace Marten.Schema
                     Column = DocumentTypeColumn,
                     DbType = NpgsqlDbType.Varchar,
                     PostgresType = "varchar",
-                    BatchUpdatePattern = ".Param(\"docType\", _hierarchy.AliasFor(document.GetType()), NpgsqlDbType.Varchar)",
-                    BulkInsertPattern = "writer.Write(_hierarchy.AliasFor(x.GetType()), NpgsqlDbType.Varchar);"
                 });
             }
 
@@ -542,7 +537,7 @@ namespace Marten.Schema
         public DuplicatedField DuplicateField(string memberName, string pgType = null)
         {
             var field = FieldFor(memberName);
-            var duplicate = new DuplicatedField(field.Members);
+            var duplicate = new DuplicatedField(_storeOptions.Serializer().EnumStorage, field.Members);
             if (pgType.IsNotEmpty())
             {
                 duplicate.PgType = pgType;
@@ -561,7 +556,7 @@ namespace Marten.Schema
             }
 
             var key = members.Select(x => x.Name).Join("");
-            return _fields.GetOrAdd(key, _ => new JsonLocatorField(members.ToArray()));
+            return _fields.GetOrAdd(key, _ => new JsonLocatorField(_storeOptions.Serializer().EnumStorage, members.ToArray()));
         }
 
         public IWhereFragment FilterDocuments(IWhereFragment query)
@@ -573,7 +568,7 @@ namespace Marten.Schema
         {
             var memberName = members.Select(x => x.Name).Join("");
 
-            var duplicatedField = new DuplicatedField(members);
+            var duplicatedField = new DuplicatedField(_storeOptions.Serializer().EnumStorage, members);
             if (pgType.IsNotEmpty())
             {
                 duplicatedField.PgType = pgType;
@@ -589,4 +584,5 @@ namespace Marten.Schema
             return Indexes.Where(x => x.Columns.Contains(column));
         }
     }
+
 }

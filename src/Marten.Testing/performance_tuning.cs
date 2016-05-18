@@ -19,7 +19,7 @@ namespace Marten.Testing
     public class JilSerializer : ISerializer
     {
         private readonly Options _options 
-            = new Options(dateFormat: DateTimeFormat.ISO8601);
+            = new Options(dateFormat: DateTimeFormat.ISO8601, includeInherited:true);
 
         public string ToJson(object document)
         {
@@ -45,6 +45,8 @@ namespace Marten.Testing
         {
             return ToJson(document);
         }
+
+        public EnumStorage EnumStorage => EnumStorage.AsString;
     }
     // ENDSAMPLE
 

@@ -8,7 +8,9 @@ using Baseline;
 using Marten.Events;
 using Marten.Linq;
 using Marten.Linq.QueryHandlers;
-using Marten.Schema.Sequences;
+using Marten.Schema.BulkLoading;
+using Marten.Schema.Identity;
+using Marten.Schema.Identity.Sequences;
 using Marten.Util;
 
 namespace Marten.Schema
@@ -25,6 +27,10 @@ namespace Marten.Schema
             new ConcurrentDictionary<Type, IDocumentMapping>();
 
 
+        private readonly ConcurrentDictionary<Type, object> _bulkLoaders = new ConcurrentDictionary<Type, object>();
+        private readonly ConcurrentDictionary<Type, object> _identityAssignments = new ConcurrentDictionary<Type, object>();
+
+
         public DocumentSchema(StoreOptions options, IConnectionFactory factory, IMartenLogger logger)
         {
             _factory = factory;
@@ -38,7 +44,7 @@ namespace Marten.Schema
 
             Parser = new MartenExpressionParser(StoreOptions.Serializer(), StoreOptions);
 
-            HandlerFactory = new QueryHandlerFactory(this);
+            HandlerFactory = new QueryHandlerFactory(this, options.Serializer());
 
             DbObjects = new DbObjects(_factory, this);
         }
@@ -51,6 +57,25 @@ namespace Marten.Schema
         }
 
         public IDbObjects DbObjects { get; }
+        public IBulkLoader<T> BulkLoaderFor<T>()
+        {
+            EnsureStorageExists(typeof(T));
+
+            return _bulkLoaders.GetOrAdd(typeof(T), t =>
+            {
+                var assignment = IdAssignmentFor<T>();
+
+                var mapping = MappingFor(typeof(T));
+
+                if (mapping is DocumentMapping)
+                {
+                    return new BulkLoader<T>(StoreOptions.Serializer(), mapping.As<DocumentMapping>(), assignment);
+                }
+
+                
+                throw new ArgumentOutOfRangeException("T", "Marten cannot do bulk inserts of " + typeof(T).FullName);
+            }).As<IBulkLoader<T>>();
+        }
 
         public MartenExpressionParser Parser { get; }
 
@@ -95,14 +120,7 @@ namespace Marten.Schema
 
                 assertNoDuplicateDocumentAliases();
 
-                IDocumentStorage storage = null;
-
-                var prebuiltType = StoreOptions.PreBuiltStorage
-                    .FirstOrDefault(x => x.DocumentTypeForStorage() == documentType);
-
-                storage = prebuiltType != null
-                    ? DocumentStorageBuilder.BuildStorageObject(this, prebuiltType, mapping.As<DocumentMapping>())
-                    : mapping.BuildStorage(this);
+                IDocumentStorage storage = mapping.BuildStorage(this);
 
                 buildSchemaObjectsIfNecessary(mapping);
 
@@ -194,6 +212,19 @@ namespace Marten.Schema
         public IResolver<T> ResolverFor<T>()
         {
             return StorageFor(typeof(T)).As<IResolver<T>>();
+        }
+
+        public IdAssignment<T> IdAssignmentFor<T>()
+        {
+            return _identityAssignments.GetOrAdd(typeof(T), t =>
+            {
+                var mapping = MappingFor(typeof(T));
+                var idType = mapping.IdMember.GetMemberType();
+
+                var assignerType = typeof(IdAssigner<,>).MakeGenericType(typeof(T), idType);
+
+                return Activator.CreateInstance(assignerType, mapping.IdMember, mapping.IdStrategy, this);
+            }).As<IdAssignment<T>>();
         }
 
 

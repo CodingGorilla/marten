@@ -2,7 +2,7 @@
 using System.Linq;
 using Marten.Schema;
 using Marten.Schema.Hierarchies;
-using Marten.Schema.Sequences;
+using Marten.Schema.Identity.Sequences;
 using Marten.Testing.Documents;
 using Marten.Testing.Schema.Hierarchies;
 using Shouldly;
@@ -157,35 +157,11 @@ namespace Marten.Testing
         }
 
         [Fact]
-        public void no_storage_arguments_with_simple_id()
-        {
-            var mapping = DocumentMapping.For<User>();
-            mapping.ToArguments().Any().ShouldBeFalse();
-        }
-
-        [Fact]
-        public void storage_arguments_from_id_member()
-        {
-            var mapping = DocumentMapping.For<IntDoc>();
-            mapping.ToArguments().Single().ShouldBeOfType<HiloIdGeneration>();
-        }
-
-        [Fact]
-        public void storage_arguments_adds_hierarchy_argument_with_subclasses()
-        {
-            var mapping = DocumentMapping.For<Squad>();
-            mapping.AddSubClass(typeof(FootballTeam));
-
-            mapping.ToArguments().OfType<HierarchyArgument>()
-                .Single().Mapping.ShouldBeSameAs(mapping);
-        }
-
-        [Fact]
         public void to_table_without_subclasses_and_no_duplicated_fields()
         {
             var mapping = DocumentMapping.For<IntDoc>();
             mapping.ToTable(null).Columns.Select(x => x.Name)
-                .ShouldHaveTheSameElementsAs("id", "data");
+                .ShouldHaveTheSameElementsAs("id", "data", DocumentMapping.LastModifiedColumn);
         }
 
         [Fact]
@@ -194,7 +170,7 @@ namespace Marten.Testing
             var mapping = DocumentMapping.For<User>();
             mapping.DuplicateField("FirstName");
             mapping.ToTable(null).Columns.Select(x => x.Name)
-                .ShouldHaveTheSameElementsAs("id", "data", "first_name");
+                .ShouldHaveTheSameElementsAs("id", "data", DocumentMapping.LastModifiedColumn, "first_name");
 
         }
 

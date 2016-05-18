@@ -7,7 +7,8 @@ using Baseline;
 using Marten.Events;
 using Marten.Linq.Parsing;
 using Marten.Schema;
-using Marten.Schema.Sequences;
+using Marten.Schema.Identity;
+using Marten.Schema.Identity.Sequences;
 using Marten.Services;
 using Npgsql;
 
@@ -23,9 +24,6 @@ namespace Marten
         private ISerializer _serializer;
         private IConnectionFactory _factory;
         private IMartenLogger _logger = new NulloMartenLogger();
-
-
-        internal readonly IList<Type> PreBuiltStorage = new List<Type>(); 
 
         private readonly ConcurrentDictionary<Type, DocumentMapping> _documentMappings =
             new ConcurrentDictionary<Type, DocumentMapping>();
@@ -119,6 +117,16 @@ namespace Marten
         }
 
         /// <summary>
+        /// Use the default serialization (ilmerged Newtonsoft.Json) with Enum values
+        /// stored as either integers or strings
+        /// </summary>
+        /// <param name="enumStyle"></param>
+        public void UseDefaultSerialization(EnumStorage enumStyle)
+        {
+            Serializer(new JsonNetSerializer {EnumStorage = enumStyle});
+        }
+
+        /// <summary>
         /// Override the JSON serialization by an ISerializer of type "T"
         /// </summary>
         /// <typeparam name="T">The ISerializer type</typeparam>
@@ -186,7 +194,7 @@ namespace Marten
         /// </summary>
         public IEventStoreConfiguration Events { get; }
 
-        internal ISerializer Serializer()
+        public ISerializer Serializer()
         {
             return _serializer ?? new JsonNetSerializer();
         }
@@ -196,34 +204,6 @@ namespace Marten
             if (_factory == null) throw new InvalidOperationException("No database connection source is configured");
 
             return _factory;
-        }
-
-        /// <summary>
-        /// Load pre-compiled document storage types from the assembly. You can
-        /// use this mechanism to speed up your application startup time by
-        /// avoiding the Roslyn just-in-time compilation
-        /// </summary>
-        /// <param name="assembly"></param>
-        public void LoadPrecompiledStorageFrom(Assembly assembly)
-        {
-            PreBuiltStorage.AddRange(assembly.GetExportedTypes().Where(x => x.IsConcreteTypeOf<IDocumentStorage>()));
-        }
-
-        /// <summary>
-        /// Load pre-compiled document storage types. Each type must be a concrete type of IDocumentStorage
-        /// </summary>
-        /// <param name="types"></param>
-        public void LoadPrecompiledStorage(IEnumerable<Type> types)
-        {
-            types.Each(x =>
-            {
-                if (!x.IsConcreteTypeOf<IDocumentStorage>())
-                {
-                    throw new ArgumentOutOfRangeException(nameof(types), $"Type {x.FullName} is not an {nameof(IDocumentStorage)} type");
-                }
-            });
-
-            PreBuiltStorage.AddRange(types);
         }
 
         public IMartenLogger Logger()
